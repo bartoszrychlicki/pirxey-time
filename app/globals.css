@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0.9884 0.0156 91.5418;
+  --foreground: 0.2814 0.0136 270.8974;
+  --card: 0.9884 0.0156 91.5418;
+  --card-foreground: 0.2814 0.0136 270.8974;
+  --popover: 0.9884 0.0156 91.5418;
+  --popover-foreground: 0.2814 0.0136 270.8974;
+  --primary: 0.6715 0.1279 235.6644;
+  --primary-foreground: 0.9848 0 0;
+  --secondary: 0.639 0.2178 25.9133;
+  --secondary-foreground: 0.9848 0 0;
+  --muted: 0.9531 0.0197 91.5787;
+  --muted-foreground: 0.5547 0.0259 270.9158;
+  --accent: 0.852 0.1478 81.4282;
+  --accent-foreground: 0.2814 0.0136 270.8974;
+  --destructive: 0.6356 0.2082 25.3782;
+  --destructive-foreground: 0.9848 0 0;
+  --success: 0.6500 0.1780 145.0000;
+  --success-foreground: 0.9848 0 0;
+  --warning: 0.7800 0.1500 75.0000;
+  --warning-foreground: 0.2814 0.0136 270.8974;
+  --border: 0.8995 0.0023 247.848;
+  --input: 0.8995 0.0023 247.848;
+  --ring: 0.6715 0.1279 235.6644;
+  --chart-1: 0.852 0.1478 81.4282;
+  --chart-2: 0.7809 0.1633 63.438;
+  --chart-3: 0.639 0.2178 25.9133;
+  --chart-4: 0.5953 0.2203 27.1965;
+  --chart-5: 0.2814 0.0136 270.8974;
+  --sidebar: 0.2814 0.0136 270.8974;
+  --sidebar-foreground: 0.9848 0 0;
+  --sidebar-primary: 0.6715 0.1279 235.6644;
+  --sidebar-primary-foreground: 0.9848 0 0;
+  --sidebar-accent: 0.852 0.1478 81.4282;
+  --sidebar-accent-foreground: 0.2814 0.0136 270.8974;
+  --sidebar-border: 0.4063 0.0179 270.9481;
+  --sidebar-ring: 0.6715 0.1279 235.6644;
+  --radius: 0.625rem;
+  --shadow-sm: 0rem 0.2rem 1rem 0rem hsl(225 11% 17% / 0.10), 0rem 1px 2px -1px hsl(225 11% 17% / 0.10);
+  --shadow-xl: 0rem 0.2rem 1rem 0rem hsl(225 11% 17% / 0.10), 0rem 8px 10px -1px hsl(225 11% 17% / 0.10);
+}
+
+.dark {
+  --background: 0.2814 0.0136 270.8974;
+  --foreground: 0.9848 0 0;
+  --card: 0.3183 0.0193 270.7473;
+  --card-foreground: 0.9848 0 0;
+  --popover: 0.3183 0.0193 270.7473;
+  --popover-foreground: 0.9848 0 0;
+  --primary: 0.6715 0.1279 235.6644;
+  --primary-foreground: 0.9848 0 0;
+  --secondary: 0.639 0.2178 25.9133;
+  --secondary-foreground: 0.9848 0 0;
+  --muted: 0.3602 0.0153 270.9643;
+  --muted-foreground: 0.6686 0.021 271.0919;
+  --accent: 0.852 0.1478 81.4282;
+  --accent-foreground: 0.2814 0.0136 270.8974;
+  --destructive: 0.6356 0.2082 25.3782;
+  --destructive-foreground: 0.9848 0 0;
+  --success: 0.6500 0.1780 145.0000;
+  --success-foreground: 0.9848 0 0;
+  --warning: 0.7800 0.1500 75.0000;
+  --warning-foreground: 0.2814 0.0136 270.8974;
+  --border: 0.4063 0.0179 270.9481;
+  --input: 0.4063 0.0179 270.9481;
+  --ring: 0.6715 0.1279 235.6644;
+  --chart-1: 0.852 0.1478 81.4282;
+  --chart-2: 0.7809 0.1633 63.438;
+  --chart-3: 0.639 0.2178 25.9133;
+  --chart-4: 0.5953 0.2203 27.1965;
+  --chart-5: 0.9848 0 0;
+  --sidebar: 0.2814 0.0136 270.8974;
+  --sidebar-foreground: 0.9848 0 0;
+  --sidebar-primary: 0.6715 0.1279 235.6644;
+  --sidebar-primary-foreground: 0.9848 0 0;
+  --sidebar-accent: 0.852 0.1478 81.4282;
+  --sidebar-accent-foreground: 0.2814 0.0136 270.8974;
+  --sidebar-border: 0.4063 0.0179 270.9481;
+  --sidebar-ring: 0.6715 0.1279 235.6644;
+  --shadow-sm: 0rem 0.2rem 1rem 0rem hsl(0 0% 0% / 0.30), 0rem 1px 2px -1px hsl(0 0% 0% / 0.30);
+  --shadow-xl: 0rem 0.2rem 1rem 0rem hsl(0 0% 0% / 0.30), 0rem 8px 10px -1px hsl(0 0% 0% / 0.30);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv03";
+  }
+
+  ::selection {
+    background: oklch(var(--primary) / 0.2);
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background: oklch(var(--card) / 0.8);
+    backdrop-filter: blur(18px);
+    border: 1px solid oklch(var(--border));
+  }
+
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      oklch(var(--primary) / 0.4),
+      oklch(var(--accent) / 0.4)
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
