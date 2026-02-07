@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock, Plus } from "lucide-react";
+import { Clock, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import type { TimeEntry } from "@/lib/types";
@@ -13,6 +13,7 @@ import { TimeEntryForm } from "@/components/time-entry-form";
 import { TimeEntryRow } from "@/components/time-entry-row";
 import { TimeEntryContextMenu } from "@/components/time-entry-context-menu";
 import { EntryEditDialog } from "@/components/entry-edit-dialog";
+import { CSVImportDialog } from "@/components/csv-import-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { TimeEntryListSkeleton, TimeEntryFormSkeleton } from "@/components/loading-skeleton";
 import { PageTransition } from "@/components/motion";
@@ -86,6 +87,7 @@ export default function TrackerPage() {
   const { tags } = useTags();
 
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
 
   const dateGroups = useMemo(() => groupEntriesByDate(entries), [entries]);
 
@@ -143,6 +145,17 @@ export default function TrackerPage() {
     <PageTransition>
       <div className="space-y-6">
         <TimeEntryForm />
+
+        <div className="flex items-center justify-end px-1">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            onClick={() => setCsvImportOpen(true)}
+          >
+            <Upload className="h-3 w-3" />
+            Importuj CSV
+          </button>
+        </div>
 
         {isLoading ? (
           <div className="space-y-4">
@@ -212,6 +225,11 @@ export default function TrackerPage() {
           onOpenChange={(open) => {
             if (!open) setEditingEntry(null);
           }}
+        />
+
+        <CSVImportDialog
+          open={csvImportOpen}
+          onOpenChange={setCsvImportOpen}
         />
       </div>
     </PageTransition>

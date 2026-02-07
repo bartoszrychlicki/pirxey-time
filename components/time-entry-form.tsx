@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Copy,
+  Check,
   FolderDot,
   Plus,
   Tag as TagIcon,
-  Timer,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -40,7 +39,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import {
   Tooltip,
   TooltipContent,
@@ -48,7 +55,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const DURATION_PRESETS = [15, 30, 60, 90, 120];
+const DURATION_PRESETS = [15, 30, 45, 60, 90, 120, 480];
 
 function getDefaultTimes(durationMinutes = 60) {
   const now = new Date();
@@ -91,6 +98,7 @@ export function TimeEntryForm() {
   const [durationInput, setDurationInput] = useState("1:00");
   const [billable, setBillable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Apply defaults from settings on first load
@@ -422,7 +430,7 @@ export function TimeEntryForm() {
         </Select>
 
         {/* Tag multi-select (compact) */}
-        <Popover>
+        <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
@@ -457,72 +465,74 @@ export function TimeEntryForm() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-64">
-            <div className="space-y-2">
-              {recentTags.length > 0 && (
-                <>
-                  <div className="text-xs font-semibold text-muted-foreground">
-                    Ostatnio uzywane
-                  </div>
-                  {recentTags.map((tag) => {
+          <PopoverContent
+            align="end"
+            className="w-56 p-0"
+            onFocusOutside={(e) => e.preventDefault()}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
+            <Command>
+              <CommandInput placeholder="Szukaj tagu..." className="h-8 text-xs" />
+              <CommandList>
+                {recentTags.length > 0 && (
+                  <>
+                    <CommandGroup heading="Ostatnio uzywane">
+                      {recentTags.map((tag) => {
+                        const checked = selectedTagIds.includes(tag.id);
+                        return (
+                          <CommandItem
+                            key={tag.id}
+                            value={tag.name}
+                            onSelect={() =>
+                              setSelectedTagIds((prev) =>
+                                checked
+                                  ? prev.filter((id) => id !== tag.id)
+                                  : [...prev, tag.id],
+                              )
+                            }
+                          >
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="flex-1">{tag.name}</span>
+                            {checked && <Check className="h-4 w-4 shrink-0" />}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                    <CommandSeparator />
+                  </>
+                )}
+                <CommandGroup heading={recentTags.length > 0 ? "Wszystkie" : undefined}>
+                  {sortedTags.map((tag) => {
+                    if (recentTagSet.has(tag.id)) return null;
                     const checked = selectedTagIds.includes(tag.id);
                     return (
-                      <label
+                      <CommandItem
                         key={tag.id}
-                        className="flex items-center justify-between rounded-lg border border-border/70 px-3 py-2 text-sm"
+                        value={tag.name}
+                        onSelect={() =>
+                          setSelectedTagIds((prev) =>
+                            checked
+                              ? prev.filter((id) => id !== tag.id)
+                              : [...prev, tag.id],
+                          )
+                        }
                       >
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: tag.color }}
-                          />
-                          {tag.name}
-                        </span>
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={(v) =>
-                            setSelectedTagIds((prev) =>
-                              v
-                                ? [...prev, tag.id]
-                                : prev.filter((id) => id !== tag.id),
-                            )
-                          }
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: tag.color }}
                         />
-                      </label>
+                        <span className="flex-1">{tag.name}</span>
+                        {checked && <Check className="h-4 w-4 shrink-0" />}
+                      </CommandItem>
                     );
                   })}
-                  <div className="h-px bg-border" />
-                </>
-              )}
-              {sortedTags.map((tag) => {
-                if (recentTagSet.has(tag.id)) return null;
-                const checked = selectedTagIds.includes(tag.id);
-                return (
-                  <label
-                    key={tag.id}
-                    className="flex items-center justify-between rounded-lg border border-border/70 px-3 py-2 text-sm"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      {tag.name}
-                    </span>
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={(v) =>
-                        setSelectedTagIds((prev) =>
-                          v
-                            ? [...prev, tag.id]
-                            : prev.filter((id) => id !== tag.id),
-                        )
-                      }
-                    />
-                  </label>
-                );
-              })}
-            </div>
+                </CommandGroup>
+                <CommandEmpty>Brak tagow</CommandEmpty>
+              </CommandList>
+            </Command>
           </PopoverContent>
         </Popover>
 
@@ -602,17 +612,24 @@ export function TimeEntryForm() {
         </Tooltip>
 
         {/* Submit button */}
-        <Button
-          className="h-9 shrink-0 gap-1.5 px-4"
-          disabled={isSubmitting}
-          onClick={() => handleSubmit(false)}
-        >
-          <Plus className="h-4 w-4" />
-          {isSubmitting ? "..." : "Dodaj"}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              disabled={isSubmitting}
+              onClick={() => handleSubmit(false)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Dodaj wpis (Cmd+Enter)</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
-      {/* ── Secondary row: errors, presets, recent, actions ──────────── */}
+      {/* ── Secondary row: recent, presets, shortcut ─────────────── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-2 text-xs">
         {/* Errors */}
         {hasErrors && (
@@ -625,7 +642,27 @@ export function TimeEntryForm() {
           </div>
         )}
 
-        {/* Duration presets */}
+        {/* Recent descriptions (first) */}
+        {recentDescriptions.length > 0 && (
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <span>Ostatnie:</span>
+            {recentDescriptions.slice(0, 3).map((d) => (
+              <button
+                key={d}
+                type="button"
+                className="max-w-[120px] truncate rounded px-1.5 py-0.5 transition-colors hover:bg-muted hover:text-foreground"
+                onClick={() => setDescription(d)}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Duration presets (right-aligned, under date fields) */}
         <div className="flex items-center gap-1 text-muted-foreground">
           {DURATION_PRESETS.map((mins) => (
             <button
@@ -641,48 +678,6 @@ export function TimeEntryForm() {
             </button>
           ))}
         </div>
-
-        {/* Recent descriptions */}
-        {recentDescriptions.length > 0 && (
-          <>
-            <div className="h-3 w-px bg-border/60" />
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <span>Ostatnie:</span>
-              {recentDescriptions.slice(0, 3).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  className="max-w-[120px] truncate rounded px-1.5 py-0.5 transition-colors hover:bg-muted hover:text-foreground"
-                  onClick={() => setDescription(d)}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Secondary actions */}
-        {entries.length > 0 && (
-          <button
-            type="button"
-            className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
-            onClick={duplicateLastEntry}
-          >
-            <Copy className="h-3 w-3" /> Duplikuj ostatni
-          </button>
-        )}
-
-        <button
-          type="button"
-          className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
-          onClick={() => handleSubmit(true)}
-        >
-          <Timer className="h-3 w-3" /> Dodaj kolejny
-        </button>
 
         <span className="text-muted-foreground/50">Cmd+Enter</span>
       </div>
