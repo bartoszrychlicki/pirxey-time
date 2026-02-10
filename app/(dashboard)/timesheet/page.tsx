@@ -315,17 +315,7 @@ export default function TimesheetPage() {
                 <CalendarDays className="h-5 w-5" />
                 Grafik tygodniowy
               </CardTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={handleCopyPreviousWeek}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  Kopiuj poprzedni tydzien
-                </Button>
-              </div>
+              {/* "Kopiuj poprzedni tydzien" button hidden */}
             </div>
 
             {/* Week navigation */}
