@@ -43,6 +43,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/empty-state";
 import { TableSkeleton } from "@/components/loading-skeleton";
 import { PageTransition } from "@/components/motion";
@@ -78,12 +83,14 @@ export default function TeamPage() {
   const canInvite = can("team:invite");
   const canChangeRole = can("team:change_role");
 
-  // Count projects per member
-  const projectCounts = useMemo(() => {
-    const map = new Map<string, number>();
+  // Collect project names per member
+  const memberProjects = useMemo(() => {
+    const map = new Map<string, string[]>();
     projects.forEach((p) => {
       p.assignedMemberIds.forEach((memberId) => {
-        map.set(memberId, (map.get(memberId) ?? 0) + 1);
+        const list = map.get(memberId) ?? [];
+        list.push(p.name);
+        map.set(memberId, list);
       });
     });
     return map;
@@ -223,7 +230,24 @@ export default function TeamPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {projectCounts.get(member.id) ?? 0}
+                        {(memberProjects.get(member.id)?.length ?? 0) > 0 ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-default tabular-nums">
+                                {memberProjects.get(member.id)!.length}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <ul className="space-y-0.5">
+                                {memberProjects.get(member.id)!.map((name) => (
+                                  <li key={name}>{name}</li>
+                                ))}
+                              </ul>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="tabular-nums">0</span>
+                        )}
                       </TableCell>
                       {canChangeRole && (
                         <TableCell>
