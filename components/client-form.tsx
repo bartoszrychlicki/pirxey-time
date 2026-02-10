@@ -9,13 +9,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import type { Client } from "@/lib/types";
 
+const CURRENCIES = ["PLN", "USD", "EUR"] as const;
+
 const clientFormSchema = z.object({
   name: z.string().min(1, "Nazwa klienta jest wymagana."),
-  address: z.string().optional(),
-  currency: z.string().min(1, "Waluta jest wymagana."),
+  currency: z.enum(CURRENCIES, { required_error: "Waluta jest wymagana." }),
   note: z.string().optional(),
 });
 
@@ -38,8 +46,7 @@ export function ClientForm({
     resolver: zodResolver(clientFormSchema),
     defaultValues: {
       name: client?.name ?? "",
-      address: client?.address ?? "",
-      currency: client?.currency ?? "PLN",
+      currency: (client?.currency as (typeof CURRENCIES)[number]) ?? "PLN",
       note: client?.note ?? "",
     },
   });
@@ -48,8 +55,7 @@ export function ClientForm({
     if (client) {
       form.reset({
         name: client.name,
-        address: client.address ?? "",
-        currency: client.currency,
+        currency: client.currency as (typeof CURRENCIES)[number],
         note: client.note ?? "",
       });
     }
@@ -72,24 +78,28 @@ export function ClientForm({
         )}
       </div>
 
-      {/* Address */}
-      <div className="space-y-2">
-        <Label htmlFor="client-address">Adres</Label>
-        <Input
-          id="client-address"
-          placeholder="Adres (opcjonalnie)"
-          {...form.register("address")}
-        />
-      </div>
-
       {/* Currency */}
       <div className="space-y-2">
-        <Label htmlFor="client-currency">Waluta</Label>
-        <Input
-          id="client-currency"
-          placeholder="PLN"
-          {...form.register("currency")}
-        />
+        <Label>Waluta</Label>
+        <Select
+          value={form.watch("currency")}
+          onValueChange={(val) =>
+            form.setValue("currency", val as (typeof CURRENCIES)[number], {
+              shouldValidate: true,
+            })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Wybierz walute" />
+          </SelectTrigger>
+          <SelectContent>
+            {CURRENCIES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {form.formState.errors.currency && (
           <p className="text-sm text-destructive">
             {form.formState.errors.currency.message}

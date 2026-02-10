@@ -85,11 +85,7 @@ export default function ClientsPage() {
   const filtered = useMemo(() => {
     if (!search.trim()) return clients;
     const q = search.toLowerCase();
-    return clients.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.address?.toLowerCase().includes(q),
-    );
+    return clients.filter((c) => c.name.toLowerCase().includes(q));
   }, [clients, search]);
 
   const handleCreate = async (values: ClientFormValues) => {
@@ -98,7 +94,7 @@ export default function ClientsPage() {
       await create({
         workspaceId: SEED_IDS.WORKSPACE_ID,
         name: values.name,
-        address: values.address || null,
+        address: null,
         currency: values.currency,
         active: true,
         note: values.note || null,
@@ -118,7 +114,7 @@ export default function ClientsPage() {
     try {
       await update(editClient.id, {
         name: values.name,
-        address: values.address || null,
+        address: null,
         currency: values.currency,
         note: values.note || null,
       });
@@ -202,7 +198,6 @@ export default function ClientsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nazwa</TableHead>
-                <TableHead>Adres</TableHead>
                 <TableHead className="text-center">Projekty</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 {canWrite && <TableHead className="w-12" />}
@@ -212,9 +207,6 @@ export default function ClientsPage() {
               {filtered.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {client.address || "—"}
-                  </TableCell>
                   <TableCell className="text-center">
                     {projectCounts.get(client.id) ?? 0}
                   </TableCell>
