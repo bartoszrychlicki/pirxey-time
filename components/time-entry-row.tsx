@@ -62,7 +62,7 @@ export const TimeEntryRow = forwardRef<HTMLDivElement, TimeEntryRowProps>(
       {/* Billable indicator */}
       {entry.billable && (
         <span className="hidden text-xs text-muted-foreground sm:inline" title="Rozliczalne">
-          PLN
+          $
         </span>
       )}
 

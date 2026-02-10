@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock, Plus, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import type { TimeEntry } from "@/lib/types";
@@ -44,6 +44,21 @@ const POLISH_MONTHS = [
   "pazdziernika",
   "listopada",
   "grudnia",
+];
+
+const POLISH_MONTHS_NOM = [
+  "Styczen",
+  "Luty",
+  "Marzec",
+  "Kwiecien",
+  "Maj",
+  "Czerwiec",
+  "Lipiec",
+  "Sierpien",
+  "Wrzesien",
+  "Pazdziernik",
+  "Listopad",
+  "Grudzien",
 ];
 
 function formatDateHeader(dateStr: string): string {
@@ -89,7 +104,51 @@ export default function TrackerPage() {
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
 
-  const dateGroups = useMemo(() => groupEntriesByDate(entries), [entries]);
+  // Month pagination state (year-month)
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  });
+
+  const isCurrentMonth =
+    currentMonth.year === new Date().getFullYear() &&
+    currentMonth.month === new Date().getMonth();
+
+  const monthLabel = `${POLISH_MONTHS_NOM[currentMonth.month]} ${currentMonth.year}`;
+
+  const goToPrevMonth = () =>
+    setCurrentMonth((prev) => {
+      const m = prev.month - 1;
+      return m < 0
+        ? { year: prev.year - 1, month: 11 }
+        : { year: prev.year, month: m };
+    });
+
+  const goToNextMonth = () =>
+    setCurrentMonth((prev) => {
+      const m = prev.month + 1;
+      return m > 11
+        ? { year: prev.year + 1, month: 0 }
+        : { year: prev.year, month: m };
+    });
+
+  const goToCurrentMonth = () => {
+    const now = new Date();
+    setCurrentMonth({ year: now.getFullYear(), month: now.getMonth() });
+  };
+
+  // Filter entries for selected month
+  const monthEntries = useMemo(() => {
+    const prefix = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}`;
+    return entries.filter((e) => e.date.startsWith(prefix));
+  }, [entries, currentMonth]);
+
+  const dateGroups = useMemo(() => groupEntriesByDate(monthEntries), [monthEntries]);
+
+  const monthTotalMinutes = useMemo(
+    () => monthEntries.reduce((sum, e) => sum + e.durationMinutes, 0),
+    [monthEntries],
+  );
 
   const projectMap = useMemo(() => {
     const map = new Map(projects.map((p) => [p.id, p]));
@@ -146,7 +205,27 @@ export default function TrackerPage() {
       <div className="space-y-6">
         <TimeEntryForm />
 
-        <div className="flex items-center justify-end px-1">
+        {/* Month navigation + CSV import */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToPrevMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToNextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            {!isCurrentMonth && (
+              <Button variant="ghost" size="sm" onClick={goToCurrentMonth}>
+                Biezacy miesiac
+              </Button>
+            )}
+            <span className="text-sm font-medium">{monthLabel}</span>
+            {monthEntries.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                ({durationToString(monthTotalMinutes)})
+              </span>
+            )}
+          </div>
           <button
             type="button"
             className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -161,7 +240,7 @@ export default function TrackerPage() {
           <div className="space-y-4">
             <TimeEntryListSkeleton count={5} />
           </div>
-        ) : entries.length === 0 ? (
+        ) : monthEntries.length === 0 ? (
           <EmptyState
             icon={Clock}
             title="Brak wpisow czasu"

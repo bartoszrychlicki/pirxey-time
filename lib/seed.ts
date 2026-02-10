@@ -236,28 +236,85 @@ function entry(
   };
 }
 
+function monthAgo(months: number, day: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  d.setDate(day);
+  return formatDateISO(d);
+}
+
 function generateTimeEntries(): TimeEntry[] {
   return [
-    // Alicja - last 2 weeks
+    // ── Current month (recent days) ──────────────────────────────────────
+    // Alicja
     entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Implementacja widoku dashboard", daysAgo(1), "09:00", "12:30", [TAG_IDS.coding], true),
     entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Code review PR #42", daysAgo(1), "13:00", "14:30", [TAG_IDS.coding], true),
     entry(USER_IDS.alicja, PROJECT_IDS.internal, "Aktualizacja dokumentacji", daysAgo(2), "09:00", "11:00", [], false),
     entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Spotkanie z klientem Nordic Labs", daysAgo(3), "10:00", "11:30", [TAG_IDS.spotkanie], true),
     entry(USER_IDS.alicja, PROJECT_IDS.internal, "Konfiguracja CI/CD", daysAgo(5), "09:00", "12:00", [TAG_IDS.coding], false),
-
-    // Mateusz - last 2 weeks
+    // Mateusz
     entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Projektowanie ekranu logowania", daysAgo(1), "08:30", "12:00", [TAG_IDS.coding], true),
     entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Testy jednostkowe modulu auth", daysAgo(2), "09:00", "11:30", [TAG_IDS.coding], true),
     entry(USER_IDS.mateusz, PROJECT_IDS.dashboard, "Planowanie sprintu", daysAgo(3), "14:00", "15:30", [TAG_IDS.planning, TAG_IDS.spotkanie], true),
     entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Integracja API platnosci", daysAgo(4), "09:00", "13:00", [TAG_IDS.coding], true),
     entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Debugowanie nawigacji", daysAgo(7), "10:00", "12:30", [TAG_IDS.coding], true),
-
-    // Julia - last 2 weeks
+    // Julia
     entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Stylowanie komponentow tabeli", daysAgo(1), "09:30", "12:00", [TAG_IDS.coding], true),
     entry(USER_IDS.julia, PROJECT_IDS.mobile, "Implementacja ekranu profilu", daysAgo(2), "09:00", "12:30", [TAG_IDS.coding], true),
     entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Daily standup", daysAgo(3), "09:00", "09:30", [TAG_IDS.spotkanie], true),
     entry(USER_IDS.julia, PROJECT_IDS.mobile, "Responsywnosc widokow", daysAgo(4), "13:00", "16:00", [TAG_IDS.coding], true),
     entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Analiza wymaganiami klienta", daysAgo(8), "10:00", "11:30", [TAG_IDS.planning], true),
+
+    // ── 1 month ago ──────────────────────────────────────────────────────
+    // Alicja
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Refaktoring modulu raportow", monthAgo(1, 3), "09:00", "13:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Spotkanie retrospektywa", monthAgo(1, 5), "14:00", "15:30", [TAG_IDS.spotkanie], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.internal, "Setup monitoring Sentry", monthAgo(1, 8), "09:00", "11:30", [TAG_IDS.coding], false),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Implementacja filtrowania tabel", monthAgo(1, 12), "09:00", "12:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Demo dla klienta", monthAgo(1, 15), "10:00", "11:00", [TAG_IDS.spotkanie], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.internal, "Przeglad backlogu", monthAgo(1, 18), "13:00", "14:30", [TAG_IDS.planning], false),
+    // Mateusz
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Implementacja push notyfikacji", monthAgo(1, 2), "09:00", "12:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Testy E2E ekranu glownego", monthAgo(1, 6), "09:00", "11:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.dashboard, "Code review PR #38", monthAgo(1, 10), "14:00", "15:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Optymalizacja ladowania obrazow", monthAgo(1, 14), "09:00", "12:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Spotkanie planowanie sprintu", monthAgo(1, 17), "10:00", "11:30", [TAG_IDS.planning, TAG_IDS.spotkanie], true),
+    // Julia
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Implementacja dark mode", monthAgo(1, 4), "09:00", "13:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Design system komponentow", monthAgo(1, 7), "09:30", "12:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Daily standup", monthAgo(1, 9), "09:00", "09:30", [TAG_IDS.spotkanie], true),
+    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Animacje przejsc miedzy ekranami", monthAgo(1, 13), "09:00", "12:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Testy A/B strony glownej", monthAgo(1, 16), "13:00", "15:30", [TAG_IDS.coding], true),
+
+    // ── 2 months ago ─────────────────────────────────────────────────────
+    // Alicja
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Projektowanie architektury API", monthAgo(2, 2), "09:00", "12:00", [TAG_IDS.planning], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Implementacja endpointow REST", monthAgo(2, 5), "09:00", "13:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.internal, "Migracja bazy danych", monthAgo(2, 9), "10:00", "12:00", [TAG_IDS.coding], false),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Spotkanie z zespolem UX", monthAgo(2, 12), "14:00", "15:00", [TAG_IDS.spotkanie], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Integracja z Stripe", monthAgo(2, 16), "09:00", "12:30", [TAG_IDS.coding], true),
+    // Mateusz
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Setup projektu React Native", monthAgo(2, 3), "08:30", "12:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Konfiguracja nawigacji", monthAgo(2, 7), "09:00", "11:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.dashboard, "Analiza wymaganiami v2", monthAgo(2, 10), "10:00", "12:00", [TAG_IDS.planning], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Implementacja ekranu listy", monthAgo(2, 14), "09:00", "13:00", [TAG_IDS.coding], true),
+    // Julia
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Prototypowanie w Figma", monthAgo(2, 4), "09:00", "12:30", [TAG_IDS.planning], true),
+    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Tworzenie komponentow UI", monthAgo(2, 8), "09:00", "12:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Spotkanie kickoff projektu", monthAgo(2, 11), "10:00", "11:30", [TAG_IDS.spotkanie], true),
+    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Stylowanie formularzy", monthAgo(2, 15), "13:00", "16:00", [TAG_IDS.coding], true),
+
+    // ── 3 months ago ─────────────────────────────────────────────────────
+    // Alicja
+    entry(USER_IDS.alicja, PROJECT_IDS.internal, "Konfiguracja srodowiska dev", monthAgo(3, 3), "09:00", "12:00", [TAG_IDS.coding], false),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Zbieranie wymagan od klienta", monthAgo(3, 6), "10:00", "12:30", [TAG_IDS.planning, TAG_IDS.spotkanie], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Tworzenie user stories", monthAgo(3, 10), "09:00", "11:00", [TAG_IDS.planning], true),
+    // Mateusz
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Analiza konkurencji", monthAgo(3, 4), "09:00", "12:00", [TAG_IDS.planning], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Wireframing ekranow", monthAgo(3, 8), "09:00", "13:00", [TAG_IDS.planning], true),
+    // Julia
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Research technologii frontend", monthAgo(3, 5), "09:00", "12:00", [TAG_IDS.planning], true),
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Konfiguracja Tailwind CSS", monthAgo(3, 9), "13:00", "15:30", [TAG_IDS.coding], true),
   ];
 }
 
