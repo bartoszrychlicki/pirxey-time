@@ -52,6 +52,7 @@ import { useClients } from "@/hooks/use-clients";
 import { useMembers } from "@/hooks/use-members";
 import { useTimeEntries } from "@/hooks/use-time-entries";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useAuth } from "@/hooks/use-auth";
 import { ProjectForm, type ProjectFormValues } from "@/components/project-form";
 import { formatDuration } from "@/lib/format";
 import type { Project } from "@/lib/types";
@@ -66,6 +67,7 @@ export default function ProjectDetailPage() {
   const { members } = useMembers();
   const { entries } = useTimeEntries();
   const { can } = usePermissions();
+  const { user } = useAuth();
 
   const [isPending, setIsPending] = useState(false);
   const [memberToAdd, setMemberToAdd] = useState<string>("");
@@ -82,6 +84,13 @@ export default function ProjectDetailPage() {
     if (!project?.clientId) return null;
     return clients.find((c) => c.id === project.clientId)?.name ?? null;
   }, [project, clients]);
+
+  // Admin can manage all projects, manager only projects they're assigned to
+  const canManageMembers = useMemo(() => {
+    if (isAdmin) return true;
+    if (!project || !user) return false;
+    return can("projects:manage_members") && project.assignedMemberIds.includes(user.id);
+  }, [isAdmin, project, user, can]);
 
   // Members assigned to this project
   const assignedMembers = useMemo(() => {
@@ -232,7 +241,7 @@ export default function ProjectDetailPage() {
 
         {/* Members tab */}
         <TabsContent value="members" className="space-y-4 mt-4">
-          {isAdmin && availableMembers.length > 0 && (
+          {canManageMembers && availableMembers.length > 0 && (
             <div className="flex items-end gap-2">
               <div className="flex-1 max-w-xs">
                 <Select
@@ -288,7 +297,7 @@ export default function ProjectDetailPage() {
                       </p>
                     </div>
                   </div>
-                  {isAdmin && (
+                  {canManageMembers && (
                     <Button
                       variant="ghost"
                       size="icon"
