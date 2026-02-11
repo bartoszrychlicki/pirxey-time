@@ -132,3 +132,16 @@ export type UpdateTimeEntry = Partial<Omit<TimeEntry, "id" | "createdAt" | "upda
 
 export type CreateUserSettings = Omit<UserSettings, "id">;
 export type UpdateUserSettings = Partial<Omit<UserSettings, "id" | "userId">>;
+
+// ─── Grouping types ──────────────────────────────────────────────────────────
+
+export type GroupByDimension = "none" | "member" | "client" | "project" | "team";
+
+export interface GroupedEntry {
+  groupKey: string;
+  groupLabel: string;
+  groupColor?: string;
+  entries: TimeEntry[];
+  totalMinutes: number;
+  entryCount: number;
+}

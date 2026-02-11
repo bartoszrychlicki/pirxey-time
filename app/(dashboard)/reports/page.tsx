@@ -17,6 +17,8 @@ import {
   Wallet,
   WalletCards,
   Filter,
+  ArrowUpDown,
+  Info,
 } from "lucide-react";
 import {
   useReactTable,
@@ -28,15 +30,17 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 
-import type { TimeEntry } from "@/lib/types";
+import type { TimeEntry, GroupByDimension, GroupedEntry } from "@/lib/types";
 import { useTimeEntries } from "@/hooks/use-time-entries";
 import { useProjects } from "@/hooks/use-projects";
 import { useTags } from "@/hooks/use-tags";
 import { useMembers } from "@/hooks/use-members";
 import { useTeams } from "@/hooks/use-teams";
+import { useClients } from "@/hooks/use-clients";
 import { usePermissions } from "@/hooks/use-permissions";
 import { formatDuration, formatDateISO } from "@/lib/format";
 import { entriesToCSV, downloadCSV } from "@/lib/csv";
+import { entriesToExcel, downloadExcel } from "@/lib/excel";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +67,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { EmptyState } from "@/components/empty-state";
 import { TableSkeleton } from "@/components/loading-skeleton";
 import { PageTransition } from "@/components/motion";
@@ -108,6 +118,7 @@ export default function ReportsPage() {
   const { tags } = useTags();
   const { members } = useMembers();
   const { teams } = useTeams();
+  const { clients } = useClients();
   const { can } = usePermissions();
 
   // ─── Filter state ───────────────────────────────────────────────────────
@@ -120,6 +131,12 @@ export default function ReportsPage() {
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [billableFilter, setBillableFilter] = useState<BillableFilter>("all");
+
+  // ─── Grouping state ─────────────────────────────────────────────────────
+
+  const [groupBy, setGroupBy] = useState<GroupByDimension>("none");
+  const [groupSortBy, setGroupSortBy] = useState<"name" | "duration">("name");
+  const [groupSortOrder, setGroupSortOrder] = useState<"asc" | "desc">("asc");
 
   // ─── Computed date range ────────────────────────────────────────────────
 
@@ -197,6 +214,171 @@ export default function ReportsPage() {
     () => new Map(tags.map((t) => [t.id, t])),
     [tags]
   );
+  const clientMap = useMemo(
+    () => new Map(clients.map((c) => [c.id, c])),
+    [clients]
+  );
+  const teamMap = useMemo(
+    () => new Map(teams.map((t) => [t.id, t])),
+    [teams]
+  );
+
+  // ─── Grouping logic ──────────────────────────────────────────────────
+
+  const groupedData = useMemo(() => {
+    if (groupBy === "none") {
+      return { groups: [] };
+    }
+
+    const groupMap = new Map<string, TimeEntry[]>();
+
+    filteredEntries.forEach((entry) => {
+      let groupKeys: { key: string; label: string; color?: string }[] = [];
+
+      switch (groupBy) {
+        case "member": {
+          const member = memberMap.get(entry.userId);
+          groupKeys = [
+            {
+              key: entry.userId,
+              label: member?.name ?? "Nieznany użytkownik",
+            },
+          ];
+          break;
+        }
+        case "project": {
+          if (entry.projectId) {
+            const project = projectMap.get(entry.projectId);
+            groupKeys = [
+              {
+                key: entry.projectId,
+                label: project?.name ?? "Nieznany projekt",
+                color: project?.color,
+              },
+            ];
+          } else {
+            groupKeys = [{ key: "__no_project__", label: "Brak projektu" }];
+          }
+          break;
+        }
+        case "client": {
+          const project = entry.projectId
+            ? projectMap.get(entry.projectId)
+            : null;
+          if (project?.clientId) {
+            const client = clientMap.get(project.clientId);
+            groupKeys = [
+              {
+                key: project.clientId,
+                label: client?.name ?? "Nieznany klient",
+              },
+            ];
+          } else {
+            groupKeys = [{ key: "__no_client__", label: "Brak klienta" }];
+          }
+          break;
+        }
+        case "team": {
+          const member = memberMap.get(entry.userId);
+          const teamIds = member?.teamIds ?? [];
+          if (teamIds.length === 0) {
+            groupKeys = [{ key: "__no_team__", label: "Brak zespołu" }];
+          } else {
+            groupKeys = teamIds.map((teamId) => {
+              const team = teamMap.get(teamId);
+              return {
+                key: teamId,
+                label: team?.name ?? "Nieznany zespół",
+              };
+            });
+          }
+          break;
+        }
+      }
+
+      // Add entry to each group (for team dimension, entry can be in multiple groups)
+      groupKeys.forEach(({ key }) => {
+        if (!groupMap.has(key)) {
+          groupMap.set(key, []);
+        }
+        groupMap.get(key)!.push(entry);
+      });
+    });
+
+    // Convert map to array of GroupedEntry
+    const groups: GroupedEntry[] = Array.from(groupMap.entries()).map(
+      ([groupKey, entries]) => {
+        const totalMinutes = entries.reduce(
+          (sum, e) => sum + e.durationMinutes,
+          0
+        );
+
+        // Get label and color
+        let groupLabel = "";
+        let groupColor: string | undefined;
+
+        switch (groupBy) {
+          case "member":
+            groupLabel = memberMap.get(groupKey)?.name ?? "Nieznany użytkownik";
+            break;
+          case "project":
+            if (groupKey === "__no_project__") {
+              groupLabel = "Brak projektu";
+            } else {
+              const project = projectMap.get(groupKey);
+              groupLabel = project?.name ?? "Nieznany projekt";
+              groupColor = project?.color;
+            }
+            break;
+          case "client":
+            if (groupKey === "__no_client__") {
+              groupLabel = "Brak klienta";
+            } else {
+              groupLabel = clientMap.get(groupKey)?.name ?? "Nieznany klient";
+            }
+            break;
+          case "team":
+            if (groupKey === "__no_team__") {
+              groupLabel = "Brak zespołu";
+            } else {
+              groupLabel = teamMap.get(groupKey)?.name ?? "Nieznany zespół";
+            }
+            break;
+        }
+
+        return {
+          groupKey,
+          groupLabel,
+          groupColor,
+          entries,
+          totalMinutes,
+          entryCount: entries.length,
+        };
+      }
+    );
+
+    // Sort groups
+    groups.sort((a, b) => {
+      let comparison = 0;
+      if (groupSortBy === "name") {
+        comparison = a.groupLabel.localeCompare(b.groupLabel, "pl");
+      } else {
+        comparison = a.totalMinutes - b.totalMinutes;
+      }
+      return groupSortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return { groups };
+  }, [
+    filteredEntries,
+    groupBy,
+    groupSortBy,
+    groupSortOrder,
+    memberMap,
+    projectMap,
+    clientMap,
+    teamMap,
+  ]);
 
   // ─── Table columns ────────────────────────────────────────────────────
 
@@ -324,10 +506,39 @@ export default function ReportsPage() {
       tags,
       teams,
       users: members,
+      clients,
     });
     const filename = `raport_${dateRange.start}_${dateRange.end}.csv`;
     downloadCSV(csv, filename);
-  }, [filteredEntries, projects, tags, teams, members, dateRange]);
+  }, [filteredEntries, projects, tags, teams, members, clients, dateRange]);
+
+  // ─── Excel export ─────────────────────────────────────────────────────
+
+  const handleExportExcel = useCallback(() => {
+    const grouping =
+      groupBy !== "none"
+        ? { dimension: groupBy, groups: groupedData.groups }
+        : undefined;
+
+    const workbook = entriesToExcel(
+      filteredEntries,
+      { projects, tags, teams, users: members, clients },
+      grouping
+    );
+
+    const filename = `raport_${dateRange.start}_${dateRange.end}.xlsx`;
+    downloadExcel(workbook, filename);
+  }, [
+    filteredEntries,
+    groupedData,
+    groupBy,
+    projects,
+    tags,
+    teams,
+    members,
+    clients,
+    dateRange,
+  ]);
 
   // ─── Date range label ─────────────────────────────────────────────────
 
@@ -341,6 +552,194 @@ export default function ReportsPage() {
 
   const canSeeMembers = can("time_entries:all:read") || can("time_entries:assigned_projects:read");
 
+  // ─── GroupedView component ────────────────────────────────────────────
+
+  const GroupedView = ({ groups }: { groups: GroupedEntry[] }) => {
+    if (groups.length === 0) {
+      return (
+        <EmptyState
+          icon={BarChart3}
+          title="Brak danych do wyświetlenia"
+          description="Zmień filtry lub dodaj wpisy czasu."
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {/* Sorting controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Sortuj grupy:</span>
+            <Select
+              value={groupSortBy}
+              onValueChange={(v) => setGroupSortBy(v as "name" | "duration")}
+            >
+              <SelectTrigger className="h-8 w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Nazwa</SelectItem>
+                <SelectItem value="duration">Czas trwania</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() =>
+                setGroupSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+              }
+            >
+              <ArrowUpDown className="h-4 w-4" />
+            </Button>
+            <span className="text-xs">
+              ({groupSortOrder === "asc" ? "rosnąco" : "malejąco"})
+            </span>
+          </div>
+          {groupBy === "team" && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Info className="h-3 w-3" />
+              <span>
+                Przy grupowaniu po zespole suma może przekraczać całkowity czas,
+                gdy pracownik należy do wielu zespołów
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Groups accordion */}
+        <Accordion type="multiple" className="space-y-2">
+          {groups.map((group) => (
+            <AccordionItem
+              key={group.groupKey}
+              value={group.groupKey}
+              className="rounded-md border bg-card"
+            >
+              <AccordionTrigger className="px-4 hover:no-underline">
+                <div className="flex w-full items-center justify-between pr-4">
+                  <div className="flex items-center gap-3">
+                    {group.groupColor && (
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: group.groupColor }}
+                      />
+                    )}
+                    <span className="font-semibold">{group.groupLabel}</span>
+                    <Badge variant="outline">
+                      {group.entryCount}{" "}
+                      {group.entryCount === 1 ? "wpis" : "wpisów"}
+                    </Badge>
+                  </div>
+                  <span className="font-mono font-medium tabular-nums">
+                    {formatDuration(group.totalMinutes)}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="overflow-x-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Opis</TableHead>
+                        {groupBy !== "member" && (
+                          <TableHead>Użytkownik</TableHead>
+                        )}
+                        {groupBy !== "project" && <TableHead>Projekt</TableHead>}
+                        {groupBy !== "client" && <TableHead>Klient</TableHead>}
+                        <TableHead>Start</TableHead>
+                        <TableHead>Koniec</TableHead>
+                        <TableHead>Czas</TableHead>
+                        <TableHead>Rozliczalny</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {group.entries.map((entry) => {
+                        const user = memberMap.get(entry.userId);
+                        const project = entry.projectId
+                          ? projectMap.get(entry.projectId)
+                          : null;
+                        const client =
+                          project?.clientId
+                            ? clientMap.get(project.clientId)
+                            : null;
+
+                        return (
+                          <TableRow key={entry.id}>
+                            <TableCell className="whitespace-nowrap">
+                              {format(new Date(entry.date + "T00:00:00"), "d MMM yyyy", {
+                                locale: pl,
+                              })}
+                            </TableCell>
+                            <TableCell>
+                              {entry.description || (
+                                <span className="italic text-muted-foreground">
+                                  Bez opisu
+                                </span>
+                              )}
+                            </TableCell>
+                            {groupBy !== "member" && (
+                              <TableCell className="whitespace-nowrap">
+                                {user?.name ?? "—"}
+                              </TableCell>
+                            )}
+                            {groupBy !== "project" && (
+                              <TableCell className="whitespace-nowrap">
+                                {project ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <span
+                                      className="h-2 w-2 rounded-full"
+                                      style={{ backgroundColor: project.color }}
+                                    />
+                                    {project.name}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                            )}
+                            {groupBy !== "client" && (
+                              <TableCell className="whitespace-nowrap">
+                                {client?.name ?? (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                            )}
+                            <TableCell className="whitespace-nowrap font-mono text-xs">
+                              {entry.startTime}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap font-mono text-xs">
+                              {entry.endTime}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap font-mono tabular-nums">
+                              {formatDuration(entry.durationMinutes)}
+                            </TableCell>
+                            <TableCell>
+                              {entry.billable ? (
+                                <Badge variant="default" className="text-xs">
+                                  Tak
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  Nie
+                                </Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    );
+  };
+
   return (
     <PageTransition>
     <div className="space-y-6">
@@ -353,7 +752,7 @@ export default function ReportsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
             {/* Date preset */}
             <div className="space-y-1.5">
               <Label className="text-xs">Okres</Label>
@@ -498,6 +897,26 @@ export default function ReportsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Group By filter */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Grupuj według</Label>
+              <Select
+                value={groupBy}
+                onValueChange={(v) => setGroupBy(v as GroupByDimension)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Brak</SelectItem>
+                  <SelectItem value="member">Pracownik</SelectItem>
+                  <SelectItem value="client">Klient</SelectItem>
+                  <SelectItem value="project">Projekt</SelectItem>
+                  <SelectItem value="team">Zespół</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
@@ -561,16 +980,27 @@ export default function ReportsPage() {
               <BarChart3 className="h-4 w-4" />
               Szczegoly
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={handleExportCSV}
-              disabled={filteredEntries.length === 0}
-            >
-              <Download className="h-3.5 w-3.5" />
-              Eksportuj CSV
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={handleExportCSV}
+                disabled={filteredEntries.length === 0}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Eksportuj CSV
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={handleExportExcel}
+                disabled={filteredEntries.length === 0}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Eksportuj XLS
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -582,6 +1012,8 @@ export default function ReportsPage() {
               title="Brak danych do wyswietlenia"
               description="Zmien filtry lub dodaj wpisy czasu."
             />
+          ) : groupBy !== "none" ? (
+            <GroupedView groups={groupedData.groups} />
           ) : (
             <>
               <div className="overflow-x-auto rounded-md border">
