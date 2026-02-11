@@ -33,10 +33,10 @@ import { useTimeEntries } from "@/hooks/use-time-entries";
 import { useProjects } from "@/hooks/use-projects";
 import { useTags } from "@/hooks/use-tags";
 import { useMembers } from "@/hooks/use-members";
+import { useTeams } from "@/hooks/use-teams";
 import { usePermissions } from "@/hooks/use-permissions";
 import { formatDuration, formatDateISO } from "@/lib/format";
 import { entriesToCSV, downloadCSV } from "@/lib/csv";
-import { RequirePermission } from "@/lib/rbac/guards";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -107,6 +107,7 @@ export default function ReportsPage() {
   const { projects } = useProjects();
   const { tags } = useTags();
   const { members } = useMembers();
+  const { teams } = useTeams();
   const { can } = usePermissions();
 
   // ─── Filter state ───────────────────────────────────────────────────────
@@ -116,6 +117,7 @@ export default function ReportsPage() {
   const [customEnd, setCustomEnd] = useState("");
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [memberFilter, setMemberFilter] = useState<string>("all");
+  const [teamFilter, setTeamFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [billableFilter, setBillableFilter] = useState<BillableFilter>("all");
 
@@ -131,6 +133,11 @@ export default function ReportsPage() {
     return getDateRange(datePreset);
   }, [datePreset, customStart, customEnd]);
 
+  const memberTeamMap = useMemo(
+    () => new Map(members.map((member) => [member.id, member.teamIds])),
+    [members],
+  );
+
   // ─── Filtered entries ───────────────────────────────────────────────────
 
   const filteredEntries = useMemo(() => {
@@ -144,6 +151,12 @@ export default function ReportsPage() {
       // Member
       if (memberFilter !== "all" && e.userId !== memberFilter) return false;
 
+      // Team
+      if (teamFilter !== "all") {
+        const memberTeamIds = memberTeamMap.get(e.userId) ?? [];
+        if (!memberTeamIds.includes(teamFilter)) return false;
+      }
+
       // Tag
       if (tagFilter !== "all" && !e.tagIds.includes(tagFilter)) return false;
 
@@ -153,7 +166,7 @@ export default function ReportsPage() {
 
       return true;
     });
-  }, [entries, dateRange, projectFilter, memberFilter, tagFilter, billableFilter]);
+  }, [entries, dateRange, projectFilter, memberFilter, teamFilter, tagFilter, billableFilter, memberTeamMap]);
 
   // ─── Summary stats ─────────────────────────────────────────────────────
 
@@ -309,11 +322,12 @@ export default function ReportsPage() {
     const csv = entriesToCSV(filteredEntries, {
       projects,
       tags,
+      teams,
       users: members,
     });
     const filename = `raport_${dateRange.start}_${dateRange.end}.csv`;
     downloadCSV(csv, filename);
-  }, [filteredEntries, projects, tags, members, dateRange]);
+  }, [filteredEntries, projects, tags, teams, members, dateRange]);
 
   // ─── Date range label ─────────────────────────────────────────────────
 
@@ -339,7 +353,7 @@ export default function ReportsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
             {/* Date preset */}
             <div className="space-y-1.5">
               <Label className="text-xs">Okres</Label>
@@ -424,6 +438,24 @@ export default function ReportsPage() {
                 </Select>
               </div>
             )}
+
+            {/* Tag filter */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Zespol</Label>
+              <Select value={teamFilter} onValueChange={setTeamFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Wszystkie zespoly</SelectItem>
+                  {teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Tag filter */}
             <div className="space-y-1.5">

@@ -26,7 +26,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Projekty", href: "/projects", icon: FolderKanban, permission: "projects:read" },
   { label: "Klienci", href: "/clients", icon: Building2, permission: "clients:read" },
   { label: "Tagi", href: "/tags", icon: Tags, permission: "tags:read" },
-  { label: "Zespol", href: "/team", icon: Users, permission: "team:read" },
+  { label: "Uzytkownicy", href: "/team", icon: Users, permission: "team:read" },
+  { label: "Zespoly", href: "/teams", icon: Users, permission: "settings:workspace" },
   { label: "Ustawienia", href: "/settings", icon: Settings },
 ];
 
@@ -71,6 +72,7 @@ export const COLLECTIONS = {
   CLIENTS: "clients",
   PROJECTS: "projects",
   TAGS: "tags",
+  TEAMS: "teams",
   TIME_ENTRIES: "time_entries",
   USER_SETTINGS: "user_settings",
 } as const;

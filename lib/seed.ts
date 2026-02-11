@@ -7,6 +7,7 @@ import type {
   Client,
   Project,
   Tag,
+  Team,
   TimeEntry,
   UserSettings,
 } from "@/lib/types";
@@ -41,6 +42,12 @@ const TAG_IDS = {
   planning: "tag-planning-003",
 };
 
+const TEAM_IDS = {
+  backend: "team-backend-001",
+  mobile: "team-mobile-002",
+  ux: "team-ux-003",
+};
+
 // ─── Workspace ───────────────────────────────────────────────────────────────
 
 const workspace: Workspace = {
@@ -61,6 +68,7 @@ const users: User[] = [
     name: "Alicja Nowak",
     email: "alicja@gmail.com",
     role: "ADMIN",
+    teamIds: [TEAM_IDS.backend],
     avatarUrl: null,
     createdAt: "2025-01-01T00:00:00.000Z",
     updatedAt: "2025-01-01T00:00:00.000Z",
@@ -70,6 +78,7 @@ const users: User[] = [
     name: "Mateusz Zielinski",
     email: "mateusz@gmail.com",
     role: "MANAGER",
+    teamIds: [TEAM_IDS.backend, TEAM_IDS.mobile],
     avatarUrl: null,
     createdAt: "2025-01-02T00:00:00.000Z",
     updatedAt: "2025-01-02T00:00:00.000Z",
@@ -79,6 +88,7 @@ const users: User[] = [
     name: "Julia Szymanska",
     email: "julia@gmail.com",
     role: "EMPLOYEE",
+    teamIds: [TEAM_IDS.mobile, TEAM_IDS.ux],
     avatarUrl: null,
     createdAt: "2025-01-03T00:00:00.000Z",
     updatedAt: "2025-01-03T00:00:00.000Z",
@@ -194,6 +204,32 @@ const tags: Tag[] = [
     active: true,
     createdAt: "2025-01-10T00:00:00.000Z",
     updatedAt: "2025-01-10T00:00:00.000Z",
+  },
+];
+
+// ─── Teams ───────────────────────────────────────────────────────────────────
+
+const teams: Team[] = [
+  {
+    id: TEAM_IDS.backend,
+    workspaceId: WORKSPACE_ID,
+    name: "Backend",
+    createdAt: "2025-01-09T00:00:00.000Z",
+    updatedAt: "2025-01-09T00:00:00.000Z",
+  },
+  {
+    id: TEAM_IDS.mobile,
+    workspaceId: WORKSPACE_ID,
+    name: "Mobile",
+    createdAt: "2025-01-09T00:00:00.000Z",
+    updatedAt: "2025-01-09T00:00:00.000Z",
+  },
+  {
+    id: TEAM_IDS.ux,
+    workspaceId: WORKSPACE_ID,
+    name: "UX/UI",
+    createdAt: "2025-01-09T00:00:00.000Z",
+    updatedAt: "2025-01-09T00:00:00.000Z",
   },
 ];
 
@@ -378,6 +414,7 @@ export async function seedIfEmpty(): Promise<boolean> {
   await storage.bulkCreate(COLLECTIONS.CLIENTS, clients);
   await storage.bulkCreate(COLLECTIONS.PROJECTS, projects);
   await storage.bulkCreate(COLLECTIONS.TAGS, tags);
+  await storage.bulkCreate(COLLECTIONS.TEAMS, teams);
   await storage.bulkCreate(COLLECTIONS.TIME_ENTRIES, generateTimeEntries());
   await storage.bulkCreate(COLLECTIONS.USER_SETTINGS, userSettings);
 
@@ -394,4 +431,5 @@ export const SEED_IDS = {
   CLIENT_IDS,
   PROJECT_IDS,
   TAG_IDS,
+  TEAM_IDS,
 } as const;

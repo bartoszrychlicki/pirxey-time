@@ -109,9 +109,9 @@ export default function TeamPage() {
     if (!deleteId) return;
     try {
       await remove(deleteId);
-      toast.success("Czlonek usuniety z zespolu.");
+      toast.success("Uzytkownik usuniety.");
     } catch {
-      toast.error("Nie udalo sie usunac czlonka.");
+      toast.error("Nie udalo sie usunac uzytkownika.");
     } finally {
       setDeleteId(null);
     }
@@ -132,44 +132,42 @@ export default function TeamPage() {
             Brak uprawnien
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Nie masz uprawnien do zarzadzania zespolem.
+            Nie masz uprawnien do zarzadzania uzytkownikami.
           </p>
         </div>
       }
     >
       <PageTransition>
       <div className="space-y-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Zespol</h1>
-          {canInvite && (
-            <Button onClick={() => setInviteOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Zapros
-            </Button>
-          )}
-        </div>
-
         {/* Loading */}
         {isLoading ? (
           <TableSkeleton rows={3} cols={5} />
         ) : members.length === 0 ? (
           <EmptyState
             icon={Users}
-            title="Brak czlonkow zespolu"
-            description="Zapros pierwszego czlonka do zespolu."
+            title="Brak uzytkownikow"
+            description="Zapros pierwszego uzytkownika."
             action={
               canInvite ? (
                 <Button variant="outline" onClick={() => setInviteOpen(true)}>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Zapros pierwszego czlonka
+                  Zapros pierwszego uzytkownika
                 </Button>
               ) : undefined
             }
           />
         ) : (
-          <div className="rounded-lg border">
-            <Table>
+          <>
+            {canInvite && (
+              <div className="flex justify-end">
+                <Button onClick={() => setInviteOpen(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Zapros
+                </Button>
+              </div>
+            )}
+            <div className="rounded-lg border">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Uzytkownik</TableHead>
@@ -268,7 +266,7 @@ export default function TeamPage() {
                                   onClick={() => setDeleteId(member.id)}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Usun z zespolu
+                                  Usun uzytkownika
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -281,6 +279,7 @@ export default function TeamPage() {
               </TableBody>
             </Table>
           </div>
+          </>
         )}
 
         {/* Invite dialog */}
@@ -293,10 +292,10 @@ export default function TeamPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Usunac z zespolu?</AlertDialogTitle>
+              <AlertDialogTitle>Usunac uzytkownika?</AlertDialogTitle>
               <AlertDialogDescription>
                 {memberToDelete
-                  ? `Czy na pewno chcesz usunac ${memberToDelete.name} z zespolu? Ta operacja jest nieodwracalna.`
+                  ? `Czy na pewno chcesz usunac ${memberToDelete.name}? Ta operacja jest nieodwracalna.`
                   : "Ta operacja jest nieodwracalna."}
               </AlertDialogDescription>
             </AlertDialogHeader>
