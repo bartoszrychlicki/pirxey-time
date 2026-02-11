@@ -18,17 +18,17 @@ function escapeCSV(value: string): string {
 
 export function entriesToCSV(entries: TimeEntry[], context: CSVContext): string {
   const headers = [
-    "Uzytkownik",
-    "Zespoly",
-    "Projekt",
-    "Klient",
-    "Opis",
-    "Data",
+    "User",
+    "Teams",
+    "Project",
+    "Client",
+    "Description",
+    "Date",
     "Start",
-    "Koniec",
-    "Czas trwania",
-    "Tagi",
-    "Rozliczeniowy",
+    "End",
+    "Duration",
+    "Tags",
+    "Billable",
   ];
 
   const rows = entries.map((entry) => {
@@ -49,15 +49,15 @@ export function entriesToCSV(entries: TimeEntry[], context: CSVContext): string 
     return [
       escapeCSV(user?.name ?? ""),
       escapeCSV(userTeams),
-      escapeCSV(project?.name ?? "Brak projektu"),
-      escapeCSV(client?.name ?? "Brak klienta"),
+      escapeCSV(project?.name ?? "No project"),
+      escapeCSV(client?.name ?? "No client"),
       escapeCSV(entry.description),
       entry.date,
       entry.startTime,
       entry.endTime,
       formatDuration(entry.durationMinutes),
       escapeCSV(entryTags),
-      entry.billable ? "Tak" : "Nie",
+      entry.billable ? "Yes" : "No",
     ].join(",");
   });
 

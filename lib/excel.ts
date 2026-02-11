@@ -57,17 +57,17 @@ function createFlatWorksheet(
   context: ExcelContext
 ): XLSX.WorkSheet {
   const headers = [
-    "Uzytkownik",
-    "Zespoly",
-    "Projekt",
-    "Klient",
-    "Opis",
-    "Data",
+    "User",
+    "Teams",
+    "Project",
+    "Client",
+    "Description",
+    "Date",
     "Start",
-    "Koniec",
-    "Czas trwania",
-    "Tagi",
-    "Rozliczeniowy",
+    "End",
+    "Duration",
+    "Tags",
+    "Billable",
   ];
 
   const rows = entries.map((entry) => {
@@ -88,15 +88,15 @@ function createFlatWorksheet(
     return [
       user?.name ?? "",
       userTeams,
-      project?.name ?? "Brak projektu",
-      client?.name ?? "Brak klienta",
+      project?.name ?? "No project",
+      client?.name ?? "No client",
       entry.description,
       entry.date,
       entry.startTime,
       entry.endTime,
       formatDuration(entry.durationMinutes),
       entryTags,
-      entry.billable ? "Tak" : "Nie",
+      entry.billable ? "Yes" : "No",
     ];
   });
 
@@ -118,17 +118,17 @@ function createGroupedWorksheet(
   context: ExcelContext
 ): XLSX.WorkSheet {
   const headers = [
-    "Uzytkownik",
-    "Zespoly",
-    "Projekt",
-    "Klient",
-    "Opis",
-    "Data",
+    "User",
+    "Teams",
+    "Project",
+    "Client",
+    "Description",
+    "Date",
     "Start",
-    "Koniec",
-    "Czas trwania",
-    "Tagi",
-    "Rozliczeniowy",
+    "End",
+    "Duration",
+    "Tags",
+    "Billable",
   ];
 
   const data: any[][] = [headers];
@@ -139,7 +139,7 @@ function createGroupedWorksheet(
   groups.forEach((group) => {
     // Group header row
     const groupHeaderRow = [
-      `[GRUPA] ${getDimensionLabel(dimension)}: ${group.groupLabel}`,
+      `[GROUP] ${getDimensionLabel(dimension)}: ${group.groupLabel}`,
       "",
       "",
       "",
@@ -175,8 +175,8 @@ function createGroupedWorksheet(
       const entryRow = [
         user?.name ?? "",
         userTeams,
-        project?.name ?? "Brak projektu",
-        client?.name ?? "Brak klienta",
+        project?.name ?? "No project",
+        client?.name ?? "No client",
         entry.description,
         entry.date,
         entry.startTime,
@@ -192,7 +192,7 @@ function createGroupedWorksheet(
 
   // Total row
   const totalRow = [
-    "SUMA CAŁKOWITA",
+    "TOTAL",
     "",
     "",
     "",
@@ -234,13 +234,13 @@ function createGroupedWorksheet(
 function getDimensionLabel(dimension: GroupByDimension): string {
   switch (dimension) {
     case "member":
-      return "Pracownik";
+      return "Member";
     case "client":
-      return "Klient";
+      return "Client";
     case "project":
-      return "Projekt";
+      return "Project";
     case "team":
-      return "Zespół";
+      return "Team";
     default:
       return "";
   }
