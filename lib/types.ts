@@ -15,6 +15,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  teamIds: string[];
   avatarUrl?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -69,6 +70,14 @@ export interface Tag {
   updatedAt: string;
 }
 
+export interface Team {
+  id: string;
+  workspaceId: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TimeEntry {
   id: string;
   workspaceId: string;
@@ -114,6 +123,9 @@ export type UpdateProject = Partial<Omit<Project, "id" | "createdAt" | "updatedA
 
 export type CreateTag = Omit<Tag, "id" | "createdAt" | "updatedAt">;
 export type UpdateTag = Partial<Omit<Tag, "id" | "createdAt" | "updatedAt">>;
+
+export type CreateTeam = Omit<Team, "id" | "createdAt" | "updatedAt">;
+export type UpdateTeam = Partial<Omit<Team, "id" | "createdAt" | "updatedAt">>;
 
 export type CreateTimeEntry = Omit<TimeEntry, "id" | "createdAt" | "updatedAt">;
 export type UpdateTimeEntry = Partial<Omit<TimeEntry, "id" | "createdAt" | "updatedAt">>;

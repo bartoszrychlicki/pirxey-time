@@ -10,7 +10,11 @@ const PASSWORDS_KEY = `${STORAGE_PREFIX}passwords`;
 function readUsers(): User[] {
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}${COLLECTIONS.USERS}`);
-    return raw ? JSON.parse(raw) : [];
+    const parsed = raw ? (JSON.parse(raw) as User[]) : [];
+    return parsed.map((user) => ({
+      ...user,
+      teamIds: Array.isArray(user.teamIds) ? user.teamIds : [],
+    }));
   } catch {
     return [];
   }
@@ -91,6 +95,7 @@ export async function register(credentials: RegisterCredentials): Promise<User> 
     name: credentials.name,
     email: credentials.email,
     role: isFirstUser ? "ADMIN" : "EMPLOYEE",
+    teamIds: [],
     avatarUrl: null,
     createdAt: now,
     updatedAt: now,

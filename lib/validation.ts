@@ -12,6 +12,7 @@ export const createUserSchema = z.object({
   name: z.string().min(1, "Imie i nazwisko jest wymagane."),
   email: z.string().email("Nieprawidlowy adres e-mail."),
   role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]),
+  teamIds: z.array(z.string()).default([]),
   avatarUrl: z.string().url().nullable().optional(),
 });
 

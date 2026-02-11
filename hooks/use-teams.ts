@@ -2,26 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import type { User, CreateUser, UpdateUser } from "@/lib/types";
+import type { Team, CreateTeam, UpdateTeam } from "@/lib/types";
 import { COLLECTIONS, STORAGE_CHANGE_EVENT } from "@/lib/constants";
 import { getStorage } from "@/lib/storage";
 import { useAuth } from "@/hooks/use-auth";
 
-export function useMembers() {
-  const [members, setMembers] = useState<User[]>([]);
+export function useTeams() {
+  const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
   const load = useCallback(async () => {
     if (!user) return;
     const storage = getStorage();
-    const all = await storage.getAll<User>(COLLECTIONS.USERS);
-    const normalized = all.map((member) => ({
-      ...member,
-      teamIds: Array.isArray(member.teamIds) ? member.teamIds : [],
-    }));
-    normalized.sort((a, b) => a.name.localeCompare(b.name, "pl"));
-    setMembers(normalized);
+    const all = await storage.getAll<Team>(COLLECTIONS.TEAMS);
+    all.sort((a, b) => a.name.localeCompare(b.name, "pl"));
+    setTeams(all);
     setIsLoading(false);
   }, [user]);
 
@@ -32,7 +28,7 @@ export function useMembers() {
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.collection === COLLECTIONS.USERS) {
+      if (detail?.collection === COLLECTIONS.TEAMS) {
         load();
       }
     };
@@ -40,44 +36,31 @@ export function useMembers() {
     return () => window.removeEventListener(STORAGE_CHANGE_EVENT, handler);
   }, [load]);
 
-  const create = useCallback(async (data: CreateUser) => {
+  const create = useCallback(async (data: CreateTeam) => {
     const now = new Date().toISOString();
-    const member: User = {
+    const team: Team = {
       ...data,
       id: uuidv4(),
       createdAt: now,
       updatedAt: now,
     };
     const storage = getStorage();
-    await storage.create(COLLECTIONS.USERS, member);
-    return member;
+    await storage.create(COLLECTIONS.TEAMS, team);
+    return team;
   }, []);
 
-  const update = useCallback(async (id: string, data: UpdateUser) => {
+  const update = useCallback(async (id: string, data: UpdateTeam) => {
     const storage = getStorage();
-    return storage.update<User>(COLLECTIONS.USERS, id, {
+    return storage.update<Team>(COLLECTIONS.TEAMS, id, {
       ...data,
       updatedAt: new Date().toISOString(),
-    } as Partial<User>);
+    } as Partial<Team>);
   }, []);
 
   const remove = useCallback(async (id: string) => {
     const storage = getStorage();
-    await storage.delete(COLLECTIONS.USERS, id);
+    await storage.delete(COLLECTIONS.TEAMS, id);
   }, []);
 
-  const inviteByEmail = useCallback(
-    async (email: string, name: string) => {
-      return create({
-        name,
-        email,
-        role: "EMPLOYEE",
-        teamIds: [],
-        avatarUrl: null,
-      });
-    },
-    [create],
-  );
-
-  return { members, isLoading, create, update, remove, inviteByEmail, refresh: load };
+  return { teams, isLoading, create, update, remove, refresh: load };
 }
