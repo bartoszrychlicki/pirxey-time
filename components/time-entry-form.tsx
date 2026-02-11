@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
+  ChevronDown,
   FolderDot,
   Plus,
   Tag as TagIcon,
@@ -92,6 +93,7 @@ export function TimeEntryForm() {
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState<string>("");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [dateValue, setDateValue] = useState(() => formatDateISO(new Date()));
   const [startValue, setStartValue] = useState(() => getDefaultTimes().start);
   const [endValue, setEndValue] = useState(() => getDefaultTimes().end);
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -99,6 +101,7 @@ export function TimeEntryForm() {
   const [billable, setBillable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [showAdvancedTime, setShowAdvancedTime] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Apply defaults from settings on first load
@@ -248,6 +251,7 @@ export function TimeEntryForm() {
   const resetForm = (keepDefaults: boolean) => {
     setDescription("");
     setErrors({});
+    setDateValue(formatDateISO(new Date()));
     if (!keepDefaults) {
       const dur = settings?.defaultDurationMinutes ?? 60;
       const defaults = getDefaultTimes(dur);
@@ -267,11 +271,31 @@ export function TimeEntryForm() {
     if (!user) return;
     setErrors({});
 
-    const startDate = new Date(startValue);
-    const endDate = new Date(endValue);
-    const date = formatDateISO(startDate);
-    const startTime = `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`;
-    const endTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
+    let date: string;
+    let startTime: string;
+    let endTime: string;
+
+    if (showAdvancedTime) {
+      // Use detailed start/end times
+      const startDate = new Date(startValue);
+      const endDate = new Date(endValue);
+      date = formatDateISO(startDate);
+      startTime = `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`;
+      endTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
+    } else {
+      // Use simplified date + duration
+      date = dateValue;
+      // Use default start time from settings, or 9:00 as fallback
+      const defaultStart = settings?.defaultStartTime || "09:00";
+      const [startHour, startMin] = defaultStart.split(":").map(Number);
+      startTime = defaultStart;
+
+      // Calculate end time from duration
+      const endMinutes = startMin + durationMinutes;
+      const endHour = startHour + Math.floor(endMinutes / 60);
+      const endMin = endMinutes % 60;
+      endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+    }
 
     const payload = {
       workspaceId: SEED_IDS.WORKSPACE_ID,
@@ -539,37 +563,72 @@ export function TimeEntryForm() {
         {/* Separator */}
         <div className="h-6 w-px bg-border/60" />
 
-        {/* Time inputs (compact) */}
-        <Input
-          type="datetime-local"
-          value={startValue}
-          onChange={(e) => {
-            setStartValue(e.target.value);
-            if (errors.startTime || errors.endTime) {
-              setErrors((prev) => ({
-                ...prev,
-                startTime: undefined as unknown as string,
-                endTime: undefined as unknown as string,
-              }));
-            }
-          }}
-          className="h-9 w-[155px] shrink-0 border-0 bg-muted/50 text-xs shadow-none"
-        />
-        <span className="text-xs text-muted-foreground">-</span>
-        <Input
-          type="datetime-local"
-          value={endValue}
-          onChange={(e) => {
-            setEndValue(e.target.value);
-            if (errors.endTime) {
-              setErrors((prev) => ({
-                ...prev,
-                endTime: undefined as unknown as string,
-              }));
-            }
-          }}
-          className="h-9 w-[155px] shrink-0 border-0 bg-muted/50 text-xs shadow-none"
-        />
+        {/* Simplified: Date only */}
+        {!showAdvancedTime ? (
+          <Input
+            type="date"
+            value={dateValue}
+            onChange={(e) => setDateValue(e.target.value)}
+            className="h-9 w-[130px] shrink-0 border-0 bg-muted/50 text-xs shadow-none"
+          />
+        ) : (
+          <>
+            {/* Advanced: Start/End datetimes */}
+            <Input
+              type="datetime-local"
+              value={startValue}
+              onChange={(e) => {
+                setStartValue(e.target.value);
+                if (errors.startTime || errors.endTime) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    startTime: undefined as unknown as string,
+                    endTime: undefined as unknown as string,
+                  }));
+                }
+              }}
+              className="h-9 w-[155px] shrink-0 border-0 bg-muted/50 text-xs shadow-none"
+            />
+            <span className="text-xs text-muted-foreground">-</span>
+            <Input
+              type="datetime-local"
+              value={endValue}
+              onChange={(e) => {
+                setEndValue(e.target.value);
+                if (errors.endTime) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    endTime: undefined as unknown as string,
+                  }));
+                }
+              }}
+              className="h-9 w-[155px] shrink-0 border-0 bg-muted/50 text-xs shadow-none"
+            />
+          </>
+        )}
+
+        {/* Toggle advanced time button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0 text-muted-foreground"
+              onClick={() => setShowAdvancedTime(!showAdvancedTime)}
+            >
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  showAdvancedTime && "rotate-180",
+                )}
+              />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>{showAdvancedTime ? "Ukryj dokładny czas" : "Pokaż dokładny czas"}</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Separator */}
         <div className="h-6 w-px bg-border/60" />

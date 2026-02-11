@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Tag as TagIcon, Wallet } from "lucide-react";
+import { ChevronDown, Tag as TagIcon, Wallet } from "lucide-react";
 
 import type { TimeEntry } from "@/lib/types";
 import { useTimeEntries } from "@/hooks/use-time-entries";
@@ -53,6 +53,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 interface EntryEditDialogProps {
   entry: TimeEntry | null;
@@ -78,11 +84,13 @@ export function EntryEditDialog({
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [dateValue, setDateValue] = useState("");
   const [startValue, setStartValue] = useState("");
   const [endValue, setEndValue] = useState("");
   const [durationInput, setDurationInput] = useState("");
   const [billable, setBillable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAdvancedTime, setShowAdvancedTime] = useState(false);
 
   // Populate form when entry changes
   useEffect(() => {
@@ -92,6 +100,7 @@ export function EntryEditDialog({
     setSelectedTagIds([...entry.tagIds]);
     setBillable(entry.billable);
     setDurationInput(durationToDisplayString(entry.durationMinutes));
+    setDateValue(entry.date);
 
     // Build datetime-local values from date + time
     const startDt = new Date(`${entry.date}T${entry.startTime}`);
@@ -105,15 +114,36 @@ export function EntryEditDialog({
     setIsSaving(true);
 
     try {
-      const startDate = new Date(startValue);
-      const endDate = new Date(endValue);
-      const date = formatDateISO(startDate);
-      const startTime = `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`;
-      const endTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
-      const durationMinutes = Math.max(
-        0,
-        Math.round((endDate.getTime() - startDate.getTime()) / 60000),
-      );
+      let date: string;
+      let startTime: string;
+      let endTime: string;
+      let durationMinutes: number;
+
+      if (showAdvancedTime) {
+        // Use detailed start/end times
+        const startDate = new Date(startValue);
+        const endDate = new Date(endValue);
+        date = formatDateISO(startDate);
+        startTime = `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`;
+        endTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
+        durationMinutes = Math.max(
+          0,
+          Math.round((endDate.getTime() - startDate.getTime()) / 60000),
+        );
+      } else {
+        // Use simplified date + duration
+        date = dateValue;
+        const parsed = parseDurationInput(durationInput);
+        durationMinutes = parsed ?? entry.durationMinutes;
+
+        // Keep original start time, adjust end time
+        startTime = entry.startTime;
+        const [startHour, startMin] = startTime.split(":").map(Number);
+        const endMinutes = startMin + durationMinutes;
+        const endHour = startHour + Math.floor(endMinutes / 60);
+        const endMin = endMinutes % 60;
+        endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+      }
 
       await update(entry.id, {
         description,
@@ -278,21 +308,14 @@ export function EntryEditDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          {/* Simplified date + duration */}
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Start</Label>
+              <Label>Data</Label>
               <Input
-                type="datetime-local"
-                value={startValue}
-                onChange={(e) => setStartValue(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Koniec</Label>
-              <Input
-                type="datetime-local"
-                value={endValue}
-                onChange={(e) => setEndValue(e.target.value)}
+                type="date"
+                value={dateValue}
+                onChange={(e) => setDateValue(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -304,6 +327,46 @@ export function EntryEditDialog({
               />
             </div>
           </div>
+
+          {/* Advanced time section (collapsible) */}
+          <Collapsible open={showAdvancedTime} onOpenChange={setShowAdvancedTime}>
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-xs text-muted-foreground"
+              >
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 transition-transform",
+                    showAdvancedTime && "rotate-180",
+                  )}
+                />
+                {showAdvancedTime ? "Ukryj dokładny czas" : "Pokaż dokładny czas"}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-2">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Start</Label>
+                  <Input
+                    type="datetime-local"
+                    value={startValue}
+                    onChange={(e) => setStartValue(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Koniec</Label>
+                  <Input
+                    type="datetime-local"
+                    value={endValue}
+                    onChange={(e) => setEndValue(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <label className="flex items-center gap-2 text-sm font-medium">
             <Switch checked={billable} onCheckedChange={setBillable} />
