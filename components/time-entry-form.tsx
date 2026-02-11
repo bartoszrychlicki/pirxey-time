@@ -569,7 +569,7 @@ export function TimeEntryForm() {
             type="date"
             value={dateValue}
             onChange={(e) => setDateValue(e.target.value)}
-            className="h-9 w-[130px] shrink-0 border-0 bg-muted/50 text-xs shadow-none"
+            className="h-9 w-[150px] shrink-0 border-0 bg-muted/50 text-xs shadow-none"
           />
         ) : (
           <>
