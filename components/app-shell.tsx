@@ -130,13 +130,13 @@ function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
 
       <div className="mt-auto rounded-xl border border-border/70 bg-muted/40 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Status MVP
+          Pirxie AI Program
         </p>
         <p className="mt-1 text-sm font-medium">
-          Wersja manualna
+          Created on Opus 4.6
         </p>
         <p className="text-xs text-muted-foreground">
-          Focus: projekty, klienci, raporty.
+          Built using Agents Team collaboration.
         </p>
       </div>
     </div>
