@@ -502,7 +502,7 @@ export function TimeEntryForm() {
           value={categoryId || "__none__"}
           onValueChange={(val) => setCategoryId(val === "__none__" ? "" : val)}
         >
-          <SelectTrigger className="h-9 w-auto min-w-[130px] max-w-[180px] gap-1.5 border-0 bg-muted/50 text-xs">
+          <SelectTrigger className="h-9 w-auto min-w-[140px] max-w-[200px] gap-1.5 border-0 bg-muted/50 text-xs">
             {selectedCategory ? (
               <span className="flex items-center gap-1.5 truncate">
                 <span
