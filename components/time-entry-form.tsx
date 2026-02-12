@@ -502,9 +502,9 @@ export function TimeEntryForm() {
           value={categoryId || "__none__"}
           onValueChange={(val) => setCategoryId(val === "__none__" ? "" : val)}
         >
-          <SelectTrigger className="h-9 w-auto min-w-[140px] max-w-[200px] gap-1.5 border-0 bg-muted/50 text-xs">
+          <SelectTrigger className="h-9 w-auto min-w-[140px] max-w-[200px] gap-1.5 border-0 bg-muted/50 text-xs [&>span]:!flex [&>span]:!items-center [&>span]:!gap-1.5">
             {selectedCategory ? (
-              <span className="flex items-center gap-1.5 truncate">
+              <span className="truncate">
                 <span
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: selectedCategory.color }}
@@ -512,8 +512,8 @@ export function TimeEntryForm() {
                 <span className="truncate">{selectedCategory.name}</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <FolderTree className="h-3.5 w-3.5" />
+              <span className="text-muted-foreground">
+                <FolderTree className="h-3.5 w-3.5 shrink-0" />
                 Kategoria
               </span>
             )}
