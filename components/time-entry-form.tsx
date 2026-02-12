@@ -162,19 +162,28 @@ export function TimeEntryForm() {
     }
   }, [projectId, projects]);
 
-  // Recent descriptions (unique, last 5)
-  const recentDescriptions = useMemo(() => {
+  // Recent entries (unique by description, last 5)
+  const recentEntries = useMemo(() => {
     const seen = new Set<string>();
-    const result: string[] = [];
+    const result: typeof entries = [];
     for (const e of entries) {
       if (e.description && !seen.has(e.description)) {
         seen.add(e.description);
-        result.push(e.description);
+        result.push(e);
         if (result.length >= 5) break;
       }
     }
     return result;
   }, [entries]);
+
+  const applyRecentEntry = (entry: (typeof entries)[0]) => {
+    setDescription(entry.description);
+    setProjectId(entry.projectId ?? "");
+    setCategoryId(entry.categoryId ?? "");
+    setSelectedTagIds([...entry.tagIds]);
+    setBillable(entry.billable);
+    applyDurationMinutes(entry.durationMinutes || 60);
+  };
 
   // Recent project IDs
   const recentProjectIds = useMemo(() => {
@@ -816,18 +825,18 @@ export function TimeEntryForm() {
           </div>
         )}
 
-        {/* Recent descriptions (first) */}
-        {recentDescriptions.length > 0 && (
+        {/* Recent entries (first) */}
+        {recentEntries.length > 0 && (
           <div className="flex items-center gap-1 text-muted-foreground">
             <span>Ostatnie:</span>
-            {recentDescriptions.slice(0, 3).map((d) => (
+            {recentEntries.slice(0, 3).map((e) => (
               <button
-                key={d}
+                key={e.id}
                 type="button"
                 className="max-w-[120px] truncate rounded px-1.5 py-0.5 transition-colors hover:bg-muted hover:text-foreground"
-                onClick={() => setDescription(d)}
+                onClick={() => applyRecentEntry(e)}
               >
-                {d}
+                {e.description}
               </button>
             ))}
           </div>
