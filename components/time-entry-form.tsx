@@ -292,6 +292,7 @@ export function TimeEntryForm() {
   const resetForm = (keepDefaults: boolean) => {
     setDescription("");
     setErrors({});
+    setSelectedTagIds([]);
     setCategoryId(settings?.defaultCategoryId ?? "");
     setDateValue(formatDateISO(new Date()));
     if (!keepDefaults) {
@@ -502,22 +503,34 @@ export function TimeEntryForm() {
           value={categoryId || "__none__"}
           onValueChange={(val) => setCategoryId(val === "__none__" ? "" : val)}
         >
-          <SelectTrigger className="h-9 w-auto min-w-[140px] max-w-[200px] gap-1.5 border-0 bg-muted/50 text-xs [&>span]:!flex [&>span]:!items-center [&>span]:!gap-1.5">
-            {selectedCategory ? (
-              <span className="truncate">
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: selectedCategory.color }}
-                />
-                <span className="truncate">{selectedCategory.name}</span>
-              </span>
-            ) : (
-              <span className="text-muted-foreground">
-                <FolderTree className="h-3.5 w-3.5 shrink-0" />
-                Kategoria
-              </span>
-            )}
-          </SelectTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SelectTrigger
+                className={cn(
+                  "h-9 w-auto gap-1.5 border-0 bg-muted/50 px-2.5 text-xs [&>span]:!flex [&>span]:!items-center [&>span]:!gap-1.5",
+                  selectedCategory ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                <span>
+                  <FolderTree className="h-3.5 w-3.5 shrink-0" />
+                  {selectedCategory ? (
+                    <>
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: selectedCategory.color }}
+                      />
+                      <span className="max-w-[80px] truncate">{selectedCategory.name}</span>
+                    </>
+                  ) : (
+                    "Kategoria"
+                  )}
+                </span>
+              </SelectTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{selectedCategory ? selectedCategory.name : "Wybierz kategorie"}</p>
+            </TooltipContent>
+          </Tooltip>
           <SelectContent>
             <SelectItem value="__none__">
               <span className="text-muted-foreground">Brak kategorii</span>
