@@ -1,9 +1,10 @@
-import type { TimeEntry, Project, Tag, Team, User, Client } from "@/lib/types";
+import type { TimeEntry, Project, Tag, Category, Team, User, Client } from "@/lib/types";
 import { formatDuration } from "@/lib/format";
 
 interface CSVContext {
   projects: Project[];
   tags: Tag[];
+  categories?: Category[];
   teams: Team[];
   users: User[];
   clients: Client[];
@@ -27,6 +28,7 @@ export function entriesToCSV(entries: TimeEntry[], context: CSVContext): string 
     "Start",
     "End",
     "Duration",
+    "Category",
     "Tags",
     "Billable",
   ];
@@ -40,6 +42,9 @@ export function entriesToCSV(entries: TimeEntry[], context: CSVContext): string 
     const project = context.projects.find((p) => p.id === entry.projectId);
     const client = project?.clientId
       ? context.clients.find((c) => c.id === project.clientId)
+      : null;
+    const category = entry.categoryId
+      ? context.categories?.find((c) => c.id === entry.categoryId)
       : null;
     const entryTags = entry.tagIds
       .map((id) => context.tags.find((t) => t.id === id)?.name ?? "")
@@ -56,6 +61,7 @@ export function entriesToCSV(entries: TimeEntry[], context: CSVContext): string 
       entry.startTime,
       entry.endTime,
       formatDuration(entry.durationMinutes),
+      escapeCSV(category?.name ?? ""),
       escapeCSV(entryTags),
       entry.billable ? "Yes" : "No",
     ].join(",");

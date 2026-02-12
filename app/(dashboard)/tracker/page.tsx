@@ -8,6 +8,7 @@ import type { TimeEntry } from "@/lib/types";
 import { useTimeEntries } from "@/hooks/use-time-entries";
 import { useProjects } from "@/hooks/use-projects";
 import { useTags } from "@/hooks/use-tags";
+import { useCategories } from "@/hooks/use-categories";
 import { formatDuration, durationToString } from "@/lib/format";
 import { TimeEntryForm } from "@/components/time-entry-form";
 import { TimeEntryRow } from "@/components/time-entry-row";
@@ -100,6 +101,7 @@ export default function TrackerPage() {
   const { entries, isLoading, duplicate, remove } = useTimeEntries();
   const { projects } = useProjects();
   const { tags } = useTags();
+  const { categories } = useCategories();
 
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
@@ -154,6 +156,11 @@ export default function TrackerPage() {
     const map = new Map(projects.map((p) => [p.id, p]));
     return map;
   }, [projects]);
+
+  const categoryMap = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  );
 
   // Listen for "duplicate-last-entry" custom event (from Cmd+D / command palette)
   useEffect(() => {
@@ -288,6 +295,7 @@ export default function TrackerPage() {
                         entry={entry}
                         project={entry.projectId ? projectMap.get(entry.projectId) : null}
                         tags={tags}
+                        category={entry.categoryId ? categoryMap.get(entry.categoryId) : null}
                         onClick={() => handleEdit(entry)}
                       />
                     </TimeEntryContextMenu>

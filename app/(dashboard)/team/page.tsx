@@ -53,11 +53,14 @@ import { TableSkeleton } from "@/components/loading-skeleton";
 import { PageTransition } from "@/components/motion";
 import { useMembers } from "@/hooks/use-members";
 import { useProjects } from "@/hooks/use-projects";
+import { useCategories } from "@/hooks/use-categories";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { RequirePermission } from "@/lib/rbac/guards";
 import { TeamInviteDialog } from "@/components/team-invite-dialog";
-import type { UserRole } from "@/lib/types";
+import type { UserRole, UserSettings } from "@/lib/types";
+import { getStorage } from "@/lib/storage";
+import { COLLECTIONS } from "@/lib/constants";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrator",
@@ -74,11 +77,13 @@ const ROLE_VARIANTS: Record<UserRole, "default" | "secondary" | "outline"> = {
 export default function TeamPage() {
   const { members, isLoading, update, remove } = useMembers();
   const { projects } = useProjects();
+  const { categories } = useCategories();
   const { user } = useAuth();
   const { can } = usePermissions();
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [memberDefaultCategories, setMemberDefaultCategories] = useState<Record<string, string>>({});
 
   const canInvite = can("team:invite");
   const canChangeRole = can("team:change_role");
@@ -115,6 +120,51 @@ export default function TeamPage() {
     } finally {
       setDeleteId(null);
     }
+  };
+
+  // Load default categories for all members
+  useMemo(() => {
+    const loadDefaults = async () => {
+      const storage = getStorage();
+      const allSettings = await storage.getAll<UserSettings>(COLLECTIONS.USER_SETTINGS);
+      const map: Record<string, string> = {};
+      allSettings.forEach((s) => {
+        if (s.defaultCategoryId) {
+          map[s.userId] = s.defaultCategoryId;
+        }
+      });
+      setMemberDefaultCategories(map);
+    };
+    loadDefaults();
+    return {};
+  }, [members]);
+
+  const handleSetDefaultCategory = async (userId: string, categoryIdVal: string) => {
+    const storage = getStorage();
+    const settings = await storage.query<UserSettings>(
+      COLLECTIONS.USER_SETTINGS,
+      (s: UserSettings) => s.userId === userId,
+    );
+
+    const value = categoryIdVal === "__none__" ? null : categoryIdVal;
+
+    if (settings.length > 0) {
+      await storage.update<UserSettings>(COLLECTIONS.USER_SETTINGS, settings[0].id, {
+        defaultCategoryId: value,
+      } as Partial<UserSettings>);
+    }
+
+    setMemberDefaultCategories((prev) => {
+      const next = { ...prev };
+      if (value) {
+        next[userId] = value;
+      } else {
+        delete next[userId];
+      }
+      return next;
+    });
+
+    toast.success("Domyslna kategoria zapisana.");
   };
 
   const memberToDelete = useMemo(
@@ -174,6 +224,7 @@ export default function TeamPage() {
                   <TableHead>E-mail</TableHead>
                   <TableHead className="text-center">Rola</TableHead>
                   <TableHead className="text-center">Projekty</TableHead>
+                  {canChangeRole && <TableHead className="text-center">Domyslna kategoria</TableHead>}
                   {canChangeRole && <TableHead className="w-12" />}
                 </TableRow>
               </TableHeader>
@@ -247,6 +298,49 @@ export default function TeamPage() {
                           <span className="tabular-nums">0</span>
                         )}
                       </TableCell>
+                      {canChangeRole && (
+                        <TableCell className="text-center">
+                          <Select
+                            value={memberDefaultCategories[member.id] || "__none__"}
+                            onValueChange={(val) => handleSetDefaultCategory(member.id, val)}
+                          >
+                            <SelectTrigger className="w-[160px] mx-auto h-8 text-xs">
+                              {memberDefaultCategories[member.id] ? (
+                                (() => {
+                                  const cat = categories.find((c) => c.id === memberDefaultCategories[member.id]);
+                                  return cat ? (
+                                    <span className="flex items-center gap-2">
+                                      <span
+                                        className="inline-block h-2 w-2 rounded-full"
+                                        style={{ backgroundColor: cat.color }}
+                                      />
+                                      {cat.name}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">Brak</span>
+                                  );
+                                })()
+                              ) : (
+                                <span className="text-muted-foreground">Brak</span>
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">Brak</SelectItem>
+                              {categories.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  <span className="flex items-center gap-2">
+                                    <span
+                                      className="inline-block h-2 w-2 rounded-full"
+                                      style={{ backgroundColor: c.color }}
+                                    />
+                                    {c.name}
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      )}
                       {canChangeRole && (
                         <TableCell>
                           {!isSelf && (

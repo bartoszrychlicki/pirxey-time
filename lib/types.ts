@@ -70,6 +70,16 @@ export interface Tag {
   updatedAt: string;
 }
 
+export interface Category {
+  id: string;
+  workspaceId: string;
+  name: string;
+  color: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Team {
   id: string;
   workspaceId: string;
@@ -91,6 +101,7 @@ export interface TimeEntry {
   /** Format: HH:mm */
   endTime: string;
   durationMinutes: number;
+  categoryId?: string | null;
   tagIds: string[];
   billable: boolean;
   createdAt: string;
@@ -101,6 +112,7 @@ export interface UserSettings {
   id: string;
   userId: string;
   defaultProjectId?: string | null;
+  defaultCategoryId?: string | null;
   defaultTagIds: string[];
   defaultDurationMinutes: number;
   defaultStartTime: string;
@@ -124,6 +136,9 @@ export type UpdateProject = Partial<Omit<Project, "id" | "createdAt" | "updatedA
 export type CreateTag = Omit<Tag, "id" | "createdAt" | "updatedAt">;
 export type UpdateTag = Partial<Omit<Tag, "id" | "createdAt" | "updatedAt">>;
 
+export type CreateCategory = Omit<Category, "id" | "createdAt" | "updatedAt">;
+export type UpdateCategory = Partial<Omit<Category, "id" | "createdAt" | "updatedAt">>;
+
 export type CreateTeam = Omit<Team, "id" | "createdAt" | "updatedAt">;
 export type UpdateTeam = Partial<Omit<Team, "id" | "createdAt" | "updatedAt">>;
 
@@ -135,7 +150,7 @@ export type UpdateUserSettings = Partial<Omit<UserSettings, "id" | "userId">>;
 
 // ─── Grouping types ──────────────────────────────────────────────────────────
 
-export type GroupByDimension = "none" | "member" | "client" | "project" | "team";
+export type GroupByDimension = "none" | "member" | "client" | "project" | "team" | "category";
 
 export interface GroupedEntry {
   groupKey: string;

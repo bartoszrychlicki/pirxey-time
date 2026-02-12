@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   FolderDot,
+  FolderTree,
   Plus,
   Tag as TagIcon,
   Wallet,
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 import { useTimeEntries } from "@/hooks/use-time-entries";
 import { useProjects } from "@/hooks/use-projects";
 import { useTags } from "@/hooks/use-tags";
+import { useCategories } from "@/hooks/use-categories";
 import { useSettings } from "@/hooks/use-settings";
 import {
   formatDateISO,
@@ -87,11 +89,13 @@ export function TimeEntryForm() {
   const { entries, create } = useTimeEntries();
   const { projects } = useProjects();
   const { tags } = useTags();
+  const { categories } = useCategories();
   const { settings } = useSettings();
 
   const descriptionRef = useRef<HTMLInputElement>(null);
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [dateValue, setDateValue] = useState(() => formatDateISO(new Date()));
   const [startValue, setStartValue] = useState(() => getDefaultTimes().start);
@@ -111,6 +115,9 @@ export function TimeEntryForm() {
       settingsApplied.current = true;
       if (settings.defaultProjectId) {
         setProjectId(settings.defaultProjectId);
+      }
+      if (settings.defaultCategoryId) {
+        setCategoryId(settings.defaultCategoryId);
       }
       if (settings.defaultTagIds.length > 0) {
         setSelectedTagIds(settings.defaultTagIds);
@@ -196,6 +203,35 @@ export function TimeEntryForm() {
     [projects],
   );
 
+  // Recent category IDs
+  const recentCategoryIds = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const e of entries) {
+      if (e.categoryId && !seen.has(e.categoryId)) {
+        seen.add(e.categoryId);
+        result.push(e.categoryId);
+        if (result.length >= 4) break;
+      }
+    }
+    return result;
+  }, [entries]);
+
+  const recentCategorySet = useMemo(() => new Set(recentCategoryIds), [recentCategoryIds]);
+  const recentCategories = useMemo(
+    () => categories.filter((c) => recentCategoryIds.includes(c.id)),
+    [categories, recentCategoryIds],
+  );
+  const sortedCategories = useMemo(
+    () => [...categories].sort((a, b) => a.name.localeCompare(b.name, "pl")),
+    [categories],
+  );
+
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id === categoryId),
+    [categories, categoryId],
+  );
+
   // Recent tag IDs
   const recentTagIds = useMemo(() => {
     const seen = new Set<string>();
@@ -256,6 +292,7 @@ export function TimeEntryForm() {
   const resetForm = (keepDefaults: boolean) => {
     setDescription("");
     setErrors({});
+    setCategoryId(settings?.defaultCategoryId ?? "");
     setDateValue(formatDateISO(new Date()));
     if (!keepDefaults) {
       const dur = settings?.defaultDurationMinutes ?? 60;
@@ -311,6 +348,7 @@ export function TimeEntryForm() {
       startTime,
       endTime,
       durationMinutes,
+      categoryId: categoryId || null,
       tagIds: selectedTagIds,
       billable,
     };
@@ -363,6 +401,7 @@ export function TimeEntryForm() {
     const last = entries[0];
     setDescription(last.description);
     setProjectId(last.projectId ?? "");
+    setCategoryId(last.categoryId ?? "");
     setSelectedTagIds([...last.tagIds]);
     setBillable(last.billable);
     applyDurationMinutes(last.durationMinutes || 60);
@@ -451,6 +490,67 @@ export function TimeEntryForm() {
                       style={{ backgroundColor: p.color }}
                     />
                     {p.name}
+                  </span>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+
+        {/* Category selector (compact, single-select) */}
+        <Select
+          value={categoryId || "__none__"}
+          onValueChange={(val) => setCategoryId(val === "__none__" ? "" : val)}
+        >
+          <SelectTrigger className="h-9 w-auto min-w-[130px] max-w-[180px] gap-1.5 border-0 bg-muted/50 text-xs">
+            {selectedCategory ? (
+              <span className="flex items-center gap-1.5 truncate">
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: selectedCategory.color }}
+                />
+                <span className="truncate">{selectedCategory.name}</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <FolderTree className="h-3.5 w-3.5" />
+                Kategoria
+              </span>
+            )}
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">
+              <span className="text-muted-foreground">Brak kategorii</span>
+            </SelectItem>
+            {recentCategories.length > 0 && (
+              <>
+                <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Ostatnio uzywane
+                </div>
+                {recentCategories.map((c) => (
+                  <SelectItem key={`recent-${c.id}`} value={c.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: c.color }}
+                      />
+                      {c.name}
+                    </span>
+                  </SelectItem>
+                ))}
+                <div className="mx-2 my-1.5 h-px bg-border" />
+              </>
+            )}
+            {sortedCategories.map((c) => {
+              if (recentCategorySet.has(c.id)) return null;
+              return (
+                <SelectItem key={c.id} value={c.id}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: c.color }}
+                    />
+                    {c.name}
                   </span>
                 </SelectItem>
               );

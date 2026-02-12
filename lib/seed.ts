@@ -7,6 +7,7 @@ import type {
   Client,
   Project,
   Tag,
+  Category,
   Team,
   TimeEntry,
   UserSettings,
@@ -40,6 +41,12 @@ const TAG_IDS = {
   spotkanie: "tag-spotkanie-001",
   coding: "tag-coding-002",
   planning: "tag-planning-003",
+};
+
+const CATEGORY_IDS = {
+  frontend: "cat-frontend-001",
+  backend: "cat-backend-002",
+  testy: "cat-testy-003",
 };
 
 const TEAM_IDS = {
@@ -207,6 +214,38 @@ const tags: Tag[] = [
   },
 ];
 
+// ─── Categories ─────────────────────────────────────────────────────────────
+
+const categories: Category[] = [
+  {
+    id: CATEGORY_IDS.frontend,
+    workspaceId: WORKSPACE_ID,
+    name: "Front-end",
+    color: "#3B82F6",
+    active: true,
+    createdAt: "2025-01-10T00:00:00.000Z",
+    updatedAt: "2025-01-10T00:00:00.000Z",
+  },
+  {
+    id: CATEGORY_IDS.backend,
+    workspaceId: WORKSPACE_ID,
+    name: "Back-end",
+    color: "#22C55E",
+    active: true,
+    createdAt: "2025-01-10T00:00:00.000Z",
+    updatedAt: "2025-01-10T00:00:00.000Z",
+  },
+  {
+    id: CATEGORY_IDS.testy,
+    workspaceId: WORKSPACE_ID,
+    name: "Testy",
+    color: "#EAB308",
+    active: true,
+    createdAt: "2025-01-10T00:00:00.000Z",
+    updatedAt: "2025-01-10T00:00:00.000Z",
+  },
+];
+
 // ─── Teams ───────────────────────────────────────────────────────────────────
 
 const teams: Team[] = [
@@ -250,6 +289,7 @@ function entry(
   endTime: string,
   tagIds: string[],
   billable: boolean,
+  categoryId?: string | null,
 ): TimeEntry {
   const [sh, sm] = startTime.split(":").map(Number);
   const [eh, em] = endTime.split(":").map(Number);
@@ -265,6 +305,7 @@ function entry(
     startTime,
     endTime,
     durationMinutes,
+    categoryId: categoryId ?? null,
     tagIds,
     billable,
     createdAt: new Date().toISOString(),
@@ -283,22 +324,22 @@ function generateTimeEntries(): TimeEntry[] {
   return [
     // ── Current month (recent days) ──────────────────────────────────────
     // Alicja
-    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Implementacja widoku dashboard", daysAgo(1), "09:00", "12:30", [TAG_IDS.coding], true),
-    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Code review PR #42", daysAgo(1), "13:00", "14:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Implementacja widoku dashboard", daysAgo(1), "09:00", "12:30", [TAG_IDS.coding], true, CATEGORY_IDS.frontend),
+    entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Code review PR #42", daysAgo(1), "13:00", "14:30", [TAG_IDS.coding], true, CATEGORY_IDS.frontend),
     entry(USER_IDS.alicja, PROJECT_IDS.internal, "Aktualizacja dokumentacji", daysAgo(2), "09:00", "11:00", [], false),
     entry(USER_IDS.alicja, PROJECT_IDS.dashboard, "Spotkanie z klientem Nordic Labs", daysAgo(3), "10:00", "11:30", [TAG_IDS.spotkanie], true),
-    entry(USER_IDS.alicja, PROJECT_IDS.internal, "Konfiguracja CI/CD", daysAgo(5), "09:00", "12:00", [TAG_IDS.coding], false),
+    entry(USER_IDS.alicja, PROJECT_IDS.internal, "Konfiguracja CI/CD", daysAgo(5), "09:00", "12:00", [TAG_IDS.coding], false, CATEGORY_IDS.backend),
     // Mateusz
-    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Projektowanie ekranu logowania", daysAgo(1), "08:30", "12:00", [TAG_IDS.coding], true),
-    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Testy jednostkowe modulu auth", daysAgo(2), "09:00", "11:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Projektowanie ekranu logowania", daysAgo(1), "08:30", "12:00", [TAG_IDS.coding], true, CATEGORY_IDS.frontend),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Testy jednostkowe modulu auth", daysAgo(2), "09:00", "11:30", [TAG_IDS.coding], true, CATEGORY_IDS.testy),
     entry(USER_IDS.mateusz, PROJECT_IDS.dashboard, "Planowanie sprintu", daysAgo(3), "14:00", "15:30", [TAG_IDS.planning, TAG_IDS.spotkanie], true),
-    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Integracja API platnosci", daysAgo(4), "09:00", "13:00", [TAG_IDS.coding], true),
-    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Debugowanie nawigacji", daysAgo(7), "10:00", "12:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Integracja API platnosci", daysAgo(4), "09:00", "13:00", [TAG_IDS.coding], true, CATEGORY_IDS.backend),
+    entry(USER_IDS.mateusz, PROJECT_IDS.mobile, "Debugowanie nawigacji", daysAgo(7), "10:00", "12:30", [TAG_IDS.coding], true, CATEGORY_IDS.backend),
     // Julia
-    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Stylowanie komponentow tabeli", daysAgo(1), "09:30", "12:00", [TAG_IDS.coding], true),
-    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Implementacja ekranu profilu", daysAgo(2), "09:00", "12:30", [TAG_IDS.coding], true),
+    entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Stylowanie komponentow tabeli", daysAgo(1), "09:30", "12:00", [TAG_IDS.coding], true, CATEGORY_IDS.frontend),
+    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Implementacja ekranu profilu", daysAgo(2), "09:00", "12:30", [TAG_IDS.coding], true, CATEGORY_IDS.frontend),
     entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Daily standup", daysAgo(3), "09:00", "09:30", [TAG_IDS.spotkanie], true),
-    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Responsywnosc widokow", daysAgo(4), "13:00", "16:00", [TAG_IDS.coding], true),
+    entry(USER_IDS.julia, PROJECT_IDS.mobile, "Responsywnosc widokow", daysAgo(4), "13:00", "16:00", [TAG_IDS.coding], true, CATEGORY_IDS.frontend),
     entry(USER_IDS.julia, PROJECT_IDS.dashboard, "Analiza wymaganiami klienta", daysAgo(8), "10:00", "11:30", [TAG_IDS.planning], true),
 
     // ── 1 month ago ──────────────────────────────────────────────────────
@@ -361,6 +402,7 @@ const userSettings: UserSettings[] = [
     id: `settings-${USER_IDS.alicja}`,
     userId: USER_IDS.alicja,
     defaultProjectId: PROJECT_IDS.dashboard,
+    defaultCategoryId: CATEGORY_IDS.frontend,
     defaultTagIds: [TAG_IDS.coding],
     defaultDurationMinutes: 60,
     defaultStartTime: "09:00",
@@ -370,6 +412,7 @@ const userSettings: UserSettings[] = [
     id: `settings-${USER_IDS.mateusz}`,
     userId: USER_IDS.mateusz,
     defaultProjectId: PROJECT_IDS.mobile,
+    defaultCategoryId: null,
     defaultTagIds: [],
     defaultDurationMinutes: 120,
     defaultStartTime: "08:30",
@@ -379,6 +422,7 @@ const userSettings: UserSettings[] = [
     id: `settings-${USER_IDS.julia}`,
     userId: USER_IDS.julia,
     defaultProjectId: null,
+    defaultCategoryId: null,
     defaultTagIds: [],
     defaultDurationMinutes: 60,
     defaultStartTime: "09:00",
@@ -414,6 +458,7 @@ export async function seedIfEmpty(): Promise<boolean> {
   await storage.bulkCreate(COLLECTIONS.CLIENTS, clients);
   await storage.bulkCreate(COLLECTIONS.PROJECTS, projects);
   await storage.bulkCreate(COLLECTIONS.TAGS, tags);
+  await storage.bulkCreate(COLLECTIONS.CATEGORIES, categories);
   await storage.bulkCreate(COLLECTIONS.TEAMS, teams);
   await storage.bulkCreate(COLLECTIONS.TIME_ENTRIES, generateTimeEntries());
   await storage.bulkCreate(COLLECTIONS.USER_SETTINGS, userSettings);
@@ -431,5 +476,6 @@ export const SEED_IDS = {
   CLIENT_IDS,
   PROJECT_IDS,
   TAG_IDS,
+  CATEGORY_IDS,
   TEAM_IDS,
 } as const;

@@ -71,6 +71,17 @@ export const createTagSchema = z.object({
 
 export const updateTagSchema = createTagSchema.partial();
 
+// ─── Category ───────────────────────────────────────────────────────────────
+
+export const createCategorySchema = z.object({
+  workspaceId: z.string().min(1),
+  name: z.string().min(1, "Nazwa kategorii jest wymagana."),
+  color: z.string().regex(hexColorRegex, "Nieprawidlowy kolor."),
+  active: z.boolean().default(true),
+});
+
+export const updateCategorySchema = createCategorySchema.partial();
+
 // ─── TimeEntry ───────────────────────────────────────────────────────────────
 
 export const createTimeEntrySchema = z.object({
@@ -86,6 +97,7 @@ export const createTimeEntrySchema = z.object({
     .string()
     .regex(timeRegex, "Nieprawidlowy format godziny (HH:mm)."),
   durationMinutes: z.number().int().min(1, "Czas trwania musi byc wiekszy niz 0."),
+  categoryId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).default([]),
   billable: z.boolean().default(false),
 });
@@ -108,6 +120,7 @@ export const updateTimeEntrySchema = z.object({
     .regex(timeRegex, "Nieprawidlowy format godziny (HH:mm).")
     .optional(),
   durationMinutes: z.number().int().min(1).optional(),
+  categoryId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   billable: z.boolean().optional(),
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import type { TimeEntry, Project, Tag } from "@/lib/types";
+import type { TimeEntry, Project, Tag, Category } from "@/lib/types";
 import { formatDuration } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -10,11 +10,12 @@ interface TimeEntryRowProps {
   entry: TimeEntry;
   project?: Project | null;
   tags: Tag[];
+  category?: Category | null;
   onClick?: () => void;
 }
 
 export const TimeEntryRow = forwardRef<HTMLDivElement, TimeEntryRowProps>(
-  function TimeEntryRow({ entry, project, tags, onClick, ...rest }, ref) {
+  function TimeEntryRow({ entry, project, tags, category, onClick, ...rest }, ref) {
   const entryTags = tags.filter((t) => entry.tagIds.includes(t.id));
 
   return (
@@ -43,6 +44,17 @@ export const TimeEntryRow = forwardRef<HTMLDivElement, TimeEntryRowProps>(
           </p>
         )}
       </div>
+
+      {/* Category */}
+      {category && (
+        <Badge variant="outline" className="hidden gap-1 text-xs sm:flex">
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: category.color }}
+          />
+          {category.name}
+        </Badge>
+      )}
 
       {/* Tags */}
       {entryTags.length > 0 && (

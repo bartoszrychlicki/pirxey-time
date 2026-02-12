@@ -34,6 +34,7 @@ import type { TimeEntry, GroupByDimension, GroupedEntry } from "@/lib/types";
 import { useTimeEntries } from "@/hooks/use-time-entries";
 import { useProjects } from "@/hooks/use-projects";
 import { useTags } from "@/hooks/use-tags";
+import { useCategories } from "@/hooks/use-categories";
 import { useMembers } from "@/hooks/use-members";
 import { useTeams } from "@/hooks/use-teams";
 import { useClients } from "@/hooks/use-clients";
@@ -116,6 +117,7 @@ export default function ReportsPage() {
   const { entries, isLoading } = useTimeEntries();
   const { projects } = useProjects();
   const { tags } = useTags();
+  const { categories } = useCategories();
   const { members } = useMembers();
   const { teams } = useTeams();
   const { clients } = useClients();
@@ -214,6 +216,10 @@ export default function ReportsPage() {
     () => new Map(tags.map((t) => [t.id, t])),
     [tags]
   );
+  const categoryMap = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories]
+  );
   const clientMap = useMemo(
     () => new Map(clients.map((c) => [c.id, c])),
     [clients]
@@ -294,6 +300,21 @@ export default function ReportsPage() {
           }
           break;
         }
+        case "category": {
+          if (entry.categoryId) {
+            const cat = categoryMap.get(entry.categoryId);
+            groupKeys = [
+              {
+                key: entry.categoryId,
+                label: cat?.name ?? "Nieznana kategoria",
+                color: cat?.color,
+              },
+            ];
+          } else {
+            groupKeys = [{ key: "__no_category__", label: "Brak kategorii" }];
+          }
+          break;
+        }
       }
 
       // Add entry to each group (for team dimension, entry can be in multiple groups)
@@ -344,6 +365,15 @@ export default function ReportsPage() {
               groupLabel = teamMap.get(groupKey)?.name ?? "Nieznany zespół";
             }
             break;
+          case "category":
+            if (groupKey === "__no_category__") {
+              groupLabel = "Brak kategorii";
+            } else {
+              const cat = categoryMap.get(groupKey);
+              groupLabel = cat?.name ?? "Nieznana kategoria";
+              groupColor = cat?.color;
+            }
+            break;
         }
 
         return {
@@ -378,6 +408,7 @@ export default function ReportsPage() {
     projectMap,
     clientMap,
     teamMap,
+    categoryMap,
   ]);
 
   // ─── Table columns ────────────────────────────────────────────────────
@@ -504,13 +535,14 @@ export default function ReportsPage() {
     const csv = entriesToCSV(filteredEntries, {
       projects,
       tags,
+      categories,
       teams,
       users: members,
       clients,
     });
     const filename = `raport_${dateRange.start}_${dateRange.end}.csv`;
     downloadCSV(csv, filename);
-  }, [filteredEntries, projects, tags, teams, members, clients, dateRange]);
+  }, [filteredEntries, projects, tags, categories, teams, members, clients, dateRange]);
 
   // ─── Excel export ─────────────────────────────────────────────────────
 
@@ -522,7 +554,7 @@ export default function ReportsPage() {
 
     const workbook = entriesToExcel(
       filteredEntries,
-      { projects, tags, teams, users: members, clients },
+      { projects, tags, categories, teams, users: members, clients },
       grouping
     );
 
@@ -534,6 +566,7 @@ export default function ReportsPage() {
     groupBy,
     projects,
     tags,
+    categories,
     teams,
     members,
     clients,
@@ -914,6 +947,7 @@ export default function ReportsPage() {
                   <SelectItem value="client">Klient</SelectItem>
                   <SelectItem value="project">Projekt</SelectItem>
                   <SelectItem value="team">Zespół</SelectItem>
+                  <SelectItem value="category">Kategoria</SelectItem>
                 </SelectContent>
               </Select>
             </div>

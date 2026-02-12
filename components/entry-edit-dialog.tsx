@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, Tag as TagIcon, Wallet } from "lucide-react";
+import { ChevronDown, FolderTree, Tag as TagIcon, Wallet } from "lucide-react";
 
 import type { TimeEntry } from "@/lib/types";
 import { useTimeEntries } from "@/hooks/use-time-entries";
 import { useProjects } from "@/hooks/use-projects";
 import { useTags } from "@/hooks/use-tags";
+import { useCategories } from "@/hooks/use-categories";
 import {
   formatDateTimeLocal,
   formatDuration,
@@ -80,9 +81,11 @@ export function EntryEditDialog({
   const { update, remove } = useTimeEntries();
   const { projects } = useProjects();
   const { tags } = useTags();
+  const { categories } = useCategories();
 
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [dateValue, setDateValue] = useState("");
   const [startValue, setStartValue] = useState("");
@@ -97,6 +100,7 @@ export function EntryEditDialog({
     if (!entry) return;
     setDescription(entry.description);
     setProjectId(entry.projectId ?? "");
+    setCategoryId(entry.categoryId ?? "");
     setSelectedTagIds([...entry.tagIds]);
     setBillable(entry.billable);
     setDurationInput(durationToDisplayString(entry.durationMinutes));
@@ -148,6 +152,7 @@ export function EntryEditDialog({
       await update(entry.id, {
         description,
         projectId: projectId || null,
+        categoryId: categoryId || null,
         tagIds: selectedTagIds,
         date,
         startTime,
@@ -197,7 +202,11 @@ export function EntryEditDialog({
   }, [startValue, endValue]);
 
   const selectedTags = tags.filter((t) => selectedTagIds.includes(t.id));
+  const selectedCategory = categories.find((c) => c.id === categoryId);
   const sortedProjects = [...projects].sort((a, b) =>
+    a.name.localeCompare(b.name, "pl"),
+  );
+  const sortedCategories = [...categories].sort((a, b) =>
     a.name.localeCompare(b.name, "pl"),
   );
   const sortedTags = [...tags].sort((a, b) =>
@@ -247,6 +256,49 @@ export function EntryEditDialog({
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label>Kategoria</Label>
+              <Select
+                value={categoryId || "__none__"}
+                onValueChange={(val) => setCategoryId(val === "__none__" ? "" : val)}
+              >
+                <SelectTrigger>
+                  {selectedCategory ? (
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: selectedCategory.color }}
+                      />
+                      {selectedCategory.name}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <FolderTree className="h-4 w-4" />
+                      Brak kategorii
+                    </span>
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">
+                    <span className="text-muted-foreground">Brak kategorii</span>
+                  </SelectItem>
+                  {sortedCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: c.color }}
+                        />
+                        {c.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Tagi</Label>
               <Popover>

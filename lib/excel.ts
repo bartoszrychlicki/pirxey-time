@@ -1,10 +1,10 @@
 import * as XLSX from "xlsx";
-import type { TimeEntry, Project, Tag, Team, User, Client } from "@/lib/types";
+import type { TimeEntry, Project, Tag, Category, Team, User, Client } from "@/lib/types";
 import { formatDuration } from "@/lib/format";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type GroupByDimension = "none" | "member" | "client" | "project" | "team";
+export type GroupByDimension = "none" | "member" | "client" | "project" | "team" | "category";
 
 export interface GroupedEntry {
   groupKey: string;
@@ -18,6 +18,7 @@ export interface GroupedEntry {
 export interface ExcelContext {
   projects: Project[];
   tags: Tag[];
+  categories?: Category[];
   teams: Team[];
   users: User[];
   clients: Client[];
@@ -66,6 +67,7 @@ function createFlatWorksheet(
     "Start",
     "End",
     "Duration",
+    "Category",
     "Tags",
     "Billable",
   ];
@@ -79,6 +81,9 @@ function createFlatWorksheet(
     const project = context.projects.find((p) => p.id === entry.projectId);
     const client = project?.clientId
       ? context.clients.find((c) => c.id === project.clientId)
+      : null;
+    const category = entry.categoryId
+      ? context.categories?.find((c) => c.id === entry.categoryId)
       : null;
     const entryTags = entry.tagIds
       .map((id) => context.tags.find((t) => t.id === id)?.name ?? "")
@@ -95,6 +100,7 @@ function createFlatWorksheet(
       entry.startTime,
       entry.endTime,
       formatDuration(entry.durationMinutes),
+      category?.name ?? "",
       entryTags,
       entry.billable ? "Yes" : "No",
     ];
@@ -150,6 +156,7 @@ function createGroupedWorksheet(
       formatDuration(group.totalMinutes),
       "",
       "",
+      "",
     ];
     data.push(groupHeaderRow);
     outlineLevel.push(0); // Group header at level 0
@@ -203,6 +210,7 @@ function createGroupedWorksheet(
     formatDuration(totalMinutes),
     "",
     "",
+    "",
   ];
   data.push(totalRow);
   outlineLevel.push(0); // Total row at level 0
@@ -241,6 +249,8 @@ function getDimensionLabel(dimension: GroupByDimension): string {
       return "Project";
     case "team":
       return "Team";
+    case "category":
+      return "Category";
     default:
       return "";
   }
