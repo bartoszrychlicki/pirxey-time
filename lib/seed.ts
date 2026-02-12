@@ -448,6 +448,12 @@ function seedPasswords(): void {
 export async function seedIfEmpty(): Promise<boolean> {
   const storage = getStorage();
 
+  // Migration: seed categories for existing installs that don't have them yet
+  const existingCategories = await storage.getAll(COLLECTIONS.CATEGORIES);
+  if (existingCategories.length === 0) {
+    await storage.bulkCreate(COLLECTIONS.CATEGORIES, categories);
+  }
+
   const existingUsers = await storage.getAll(COLLECTIONS.USERS);
   if (existingUsers.length > 0) {
     return false;
@@ -458,7 +464,7 @@ export async function seedIfEmpty(): Promise<boolean> {
   await storage.bulkCreate(COLLECTIONS.CLIENTS, clients);
   await storage.bulkCreate(COLLECTIONS.PROJECTS, projects);
   await storage.bulkCreate(COLLECTIONS.TAGS, tags);
-  await storage.bulkCreate(COLLECTIONS.CATEGORIES, categories);
+  // Categories already seeded by migration above
   await storage.bulkCreate(COLLECTIONS.TEAMS, teams);
   await storage.bulkCreate(COLLECTIONS.TIME_ENTRIES, generateTimeEntries());
   await storage.bulkCreate(COLLECTIONS.USER_SETTINGS, userSettings);
