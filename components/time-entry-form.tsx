@@ -125,6 +125,11 @@ export function TimeEntryForm() {
     }
   }, [settings]);
 
+  // Auto focus on mount
+  useEffect(() => {
+    descriptionRef.current?.focus();
+  }, []);
+
   // Listen for global "focus-new-entry" event (from Cmd+N / command palette)
   useEffect(() => {
     const handler = () => {
