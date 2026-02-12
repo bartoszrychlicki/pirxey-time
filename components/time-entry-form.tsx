@@ -119,9 +119,6 @@ export function TimeEntryForm() {
       if (settings.defaultCategoryId) {
         setCategoryId(settings.defaultCategoryId);
       }
-      if (settings.defaultTagIds.length > 0) {
-        setSelectedTagIds(settings.defaultTagIds);
-      }
       if (settings.defaultDurationMinutes) {
         const defaults = getDefaultTimes(settings.defaultDurationMinutes);
         setStartValue(defaults.start);
